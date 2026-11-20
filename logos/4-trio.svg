@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 100 100" role="img" aria-label="Símbolo dente formado por três cúspides">
+      <path d="M20 44 H80 V56 C80 64 77 70 75 78 C73 87 70 92 65 92 C59 92 59 77 54 73 H46 C41 77 41 92 35 92 C30 92 27 87 25 78 C23 70 20 64 20 56 Z" fill="#1b3a8c"></path>
+      <circle cx="30" cy="38" r="13" fill="#f4b400" stroke="#f5f6f9" stroke-width="3"></circle>
+      <circle cx="70" cy="38" r="13" fill="#4f7be0" stroke="#f5f6f9" stroke-width="3"></circle>
+      <circle cx="50" cy="34" r="14" fill="#c41e2e" stroke="#f5f6f9" stroke-width="3"></circle>
+    </svg>

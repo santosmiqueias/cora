@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 100 100" role="img" aria-label="Símbolo C de Cuidado">
+      <path d="M75.5 24.5 A36 36 0 1 0 75.5 75.5" fill="none" stroke="#1b3a8c" stroke-width="12" stroke-linecap="round"></path>
+      <g transform="translate(30 30) scale(0.4)"><path d="M30 12 C18 12 12 22 12 34 C12 46 18 52 21 62 C24 74 25 90 33 90 C40 90 40 72 46 68 C48 67 52 67 54 68 C60 72 60 90 67 90 C75 90 76 74 79 62 C82 52 88 46 88 34 C88 22 82 12 70 12 C61 12 57 17 50 17 C43 17 39 12 30 12 Z" fill="#f4b400"></path></g>
+      <circle cx="86" cy="50" r="6" fill="#c41e2e"></circle>
+    </svg>

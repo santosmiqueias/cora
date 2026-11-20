@@ -1,0 +1,1099 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font:14px/1.5 system-ui,sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>CORA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: cabeçalho com relógio de Brasília e usuário identificado, abas horizontais (Check-in, Identificação, Progresso, Métricas) e área de trabalho de largura total */
+:root{
+  --bg:#f5f6f9; --surface:#ffffff; --surface-2:#edf0f6; --line:#d8dee9;
+  --fg:#121c33; --muted:#566079; --accent:#1b3a8c; --accent-ink:#ffffff; --accent-soft:#e0e7f8;
+  --red:#c41e2e; --red-soft:#fbe1e3; --yellow:#f4b400; --yellow-ink:#3b2a00; --yellow-soft:#fff3cc;
+  --s-rec:#8a5a00; --s-rec-soft:#fff0c2; --s-cli:#1b3a8c; --s-cli-soft:#e0e7f8; --s-pro:#6b3fb0; --s-pro-soft:#ece3fa;
+  --s-prov:#b34a12; --s-prov-soft:#fde5d6; --s-alta:#1c7a4a; --s-alta-soft:#dcf2e6; --bad:#c41e2e; --bad-soft:#fbe1e3;
+  --bar:#1b3a8c; --grid:#e3e7ef;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif; --f-body:"Manrope",ui-sans-serif,system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1222; --surface:#141b2e; --surface-2:#1a2338; --line:#29344d;
+  --fg:#e7ecf6; --muted:#9ba7bf; --accent:#86a5f2; --accent-ink:#0a1430; --accent-soft:#1d2b52;
+  --red:#f2707b; --red-soft:#3e1a1e; --yellow:#f7c948; --yellow-ink:#2b1f00; --yellow-soft:#3a2f0e;
+  --s-rec:#f7c948; --s-rec-soft:#3a2f0e; --s-cli:#86a5f2; --s-cli-soft:#1d2b52; --s-pro:#bd9cf2; --s-pro-soft:#2c2048;
+  --s-prov:#f39a6c; --s-prov-soft:#3d2216; --s-alta:#6bd39b; --s-alta-soft:#143424; --bad:#f2707b; --bad-soft:#3e1a1e;
+  --bar:#86a5f2; --grid:#243049; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1222; --surface:#141b2e; --surface-2:#1a2338; --line:#29344d;
+  --fg:#e7ecf6; --muted:#9ba7bf; --accent:#86a5f2; --accent-ink:#0a1430; --accent-soft:#1d2b52;
+  --red:#f2707b; --red-soft:#3e1a1e; --yellow:#f7c948; --yellow-ink:#2b1f00; --yellow-soft:#3a2f0e;
+  --s-rec:#f7c948; --s-rec-soft:#3a2f0e; --s-cli:#86a5f2; --s-cli-soft:#1d2b52; --s-pro:#bd9cf2; --s-pro-soft:#2c2048;
+  --s-prov:#f39a6c; --s-prov-soft:#3d2216; --s-alta:#6bd39b; --s-alta-soft:#143424; --bad:#f2707b; --bad-soft:#3e1a1e;
+  --bar:#86a5f2; --grid:#243049; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.in{max-width:1280px;margin:0 auto}
+header.top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:15}
+header.top::before{content:"";display:block;height:4px;background:linear-gradient(90deg,var(--accent) 0 60%,var(--yellow) 60% 80%,var(--red) 80% 100%)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:16;background:var(--surface)}
+.top-row{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between;padding-block:12px 8px}
+.brand{display:flex;gap:10px;align-items:center;min-width:0}
+.brand svg{width:44px;height:44px;flex:none}
+.brand b{font-family:var(--f-display);font-weight:700;font-size:24px;line-height:1;display:block;letter-spacing:.08em;color:var(--accent)}
+.brand b i{font-style:normal;color:var(--red)}
+.brand small{color:var(--muted);font-size:12px;display:block}
+.inst{display:flex;align-items:center;gap:6px;margin-top:3px;font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--red)}
+.inst button{border:0;background:none;color:var(--muted);cursor:pointer;font-size:11px;padding:1px 4px;border-radius:4px;text-transform:none;letter-spacing:0;font-weight:600}
+.inst button:hover{color:var(--accent);background:var(--surface-2)}
+.inst.vazio{color:var(--muted);font-weight:600}
+.top-meta{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.clock{font-family:var(--f-mono);font-size:13px;color:var(--muted);white-space:nowrap}
+.clock b{color:var(--fg);font-weight:500}
+.me{display:flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:99px;padding:4px 6px 4px 12px;font-size:13px;min-width:0}
+.me b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.tab{border:0;background:none;padding:10px 14px;border-bottom:2px solid transparent;cursor:pointer;font-weight:600;color:var(--muted);white-space:nowrap;display:flex;gap:7px;align-items:center}
+.tab svg{width:17px;height:17px}
+.tab:hover{color:var(--fg)}
+.tab[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--red)}
+.tab .lock{font-size:11px;font-weight:600;background:var(--surface-2);color:var(--muted);padding:1px 6px;border-radius:99px}
+main{padding-block:20px 60px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.head h1{font-family:var(--f-display);font-size:24px;font-weight:700;margin:0;letter-spacing:-.015em;text-wrap:balance}
+.head p{margin:2px 0 0;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.sm{padding:4px 10px;font-size:13px}
+.btn.ghost{border-color:transparent;background:none}
+.btn.danger{color:var(--bad);border-color:var(--bad-soft)}
+.btn.danger.armed{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn.go-cli{background:var(--s-cli);border-color:var(--s-cli);color:var(--surface)}
+.btn.go-pro{background:var(--s-pro);border-color:var(--s-pro);color:var(--surface)}
+.btn.go-prov{color:var(--s-prov);border-color:var(--s-prov)}
+.btn.go-alta{background:var(--s-alta);border-color:var(--s-alta);color:var(--surface)}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:none;padding:6px 12px;border-radius:7px;cursor:pointer;font-weight:600;color:var(--muted);font-size:13px}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.banner{border-radius:var(--r);padding:11px 14px;background:var(--accent-soft);color:var(--fg);font-size:13.5px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.banner.warn{background:var(--s-rec-soft)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-width:0}
+.panel-h{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.panel-h h2{font-family:var(--f-display);font-size:16px;font-weight:700;margin:0}
+.panel-b{padding:12px 16px}
+.empty{color:var(--muted);padding:20px 6px;text-align:center}
+input[type=text],input[type=search],input[type=date],input[type=tel],select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:84px}
+.mono{font-family:var(--f-mono);font-size:12.5px}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px;white-space:nowrap}
+.e-recepcao{background:var(--s-rec-soft);color:var(--s-rec)} .e-clinica{background:var(--s-cli-soft);color:var(--s-cli)}
+.e-procedimento{background:var(--s-pro-soft);color:var(--s-pro)} .e-provisoria{background:var(--s-prov-soft);color:var(--s-prov)}
+.e-alta{background:var(--s-alta-soft);color:var(--s-alta)}
+.c-recepcao{--sc:var(--s-rec)} .c-clinica{--sc:var(--s-cli)} .c-procedimento{--sc:var(--s-pro)} .c-provisoria{--sc:var(--s-prov)} .c-alta{--sc:var(--s-alta)}
+/* quadro de check-in */
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}
+.col{background:var(--surface-2);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.col-h{display:flex;justify-content:space-between;align-items:center;padding:2px 4px 4px;gap:6px}
+.col-h b{font-size:13px;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:7px}
+.col-h b::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--sc)}
+.col-h span{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.card-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.card-top b{font-weight:700;cursor:pointer;overflow-wrap:anywhere}
+.card-top b:hover{color:var(--accent)}
+.card .sub{color:var(--muted);font-size:12.5px}
+.steps{display:flex;flex-wrap:wrap;gap:4px 10px;font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.steps i{font-style:normal;color:var(--fg)}
+.wait{font-family:var(--f-mono);font-size:12px;font-weight:500;padding:1px 7px;border-radius:6px;background:var(--s-rec-soft);color:var(--s-rec);white-space:nowrap}
+.wait.long{background:var(--bad-soft);color:var(--bad)}
+.card .acts{display:flex;flex-wrap:wrap;gap:6px}
+.old{font-size:11px;font-weight:700;color:var(--bad)}
+/* listas */
+.split{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.4fr);gap:16px;align-items:start}
+.list{max-height:620px;overflow:auto}
+.li{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);cursor:pointer}
+.li:hover{background:var(--surface-2)}
+.li[aria-selected="true"]{background:var(--accent-soft)}
+.li b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li .l{min-width:0}
+.li span.s{color:var(--muted);font-size:12.5px}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--surface-2)}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+td.num{font-variant-numeric:tabular-nums;text-align:right}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--surface-2)}
+.ph{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:flex-start}
+.ph h2{font-family:var(--f-display);font-size:20px;margin:0;font-weight:700}
+.facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 16px;margin:0}
+.facts dt{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+.facts dd{margin:2px 0 0;overflow-wrap:anywhere}
+.alert{background:var(--bad-soft);color:var(--bad);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600}
+.visit{border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.visit-h{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 14px;background:var(--surface-2)}
+.visit-h b{font-family:var(--f-display);font-size:15px}
+.visit-b{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.tl{list-style:none;margin:0;padding:0 0 0 18px;border-left:2px solid var(--line);display:flex;flex-direction:column;gap:9px}
+.tl li{position:relative}
+.tl li::before{content:"";position:absolute;left:-24px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--sc,var(--accent));box-shadow:0 0 0 3px var(--surface)}
+.tl .t{font-family:var(--f-mono);font-size:12.5px}
+.tl .n{color:var(--muted);font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{background:var(--s-pro-soft);color:var(--s-pro);font-size:12px;font-weight:600;padding:2px 8px;border-radius:6px}
+.desc{background:var(--surface-2);border-radius:8px;padding:9px 12px;white-space:pre-wrap;overflow-wrap:anywhere}
+/* métricas */
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:13px 15px;min-width:0}
+.kpi span{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700;display:block}
+.kpi b{display:block;font-family:var(--f-display);font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15;margin-top:4px}
+.kpi small{color:var(--muted);font-size:12px}
+.kpi.hl{border-color:var(--yellow);box-shadow:inset 0 3px 0 var(--yellow)}
+.mgrid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
+.chart svg{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-family:var(--f-body);font-size:11px}
+.chart .gl{stroke:var(--grid);stroke-width:1}
+.chart .bar{fill:var(--bar)}
+.chart .hit{fill:transparent;cursor:default}
+.chart .hit:hover+.bar,.chart g:hover .bar{opacity:.8}
+.hb{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) 34px;gap:10px;align-items:center;padding:6px 0}
+.hb .lbl{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hb .trk{height:10px;background:var(--surface-2);border-radius:0 4px 4px 0}
+.hb .fill{height:100%;background:var(--bar);border-radius:0 4px 4px 0;min-width:2px}
+.hb .v{font-variant-numeric:tabular-nums;text-align:right;font-weight:700;font-size:13px}
+#tip{position:fixed;pointer-events:none;background:var(--fg);color:var(--bg);font-size:12.5px;padding:6px 9px;border-radius:6px;z-index:60;white-space:nowrap}
+.gate{max-width:460px;margin:40px auto 0;width:100%}
+.gate h1{font-family:var(--f-display);font-size:22px;margin:0}
+.gate p{margin:4px 0 0;color:var(--muted)}
+.card.mine{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.kmini{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:600px){.kmini{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kmini div{background:var(--surface-2);border-radius:8px;padding:10px 12px;min-width:0}
+.kmini span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.kmini b{font-family:var(--f-display);font-size:24px;font-variant-numeric:tabular-nums}
+.h3{font-family:var(--f-display);font-size:14px;font-weight:700;margin:0 0 6px}
+.code-big{font-family:var(--f-mono);font-size:34px;letter-spacing:.08em;background:var(--accent-soft);color:var(--accent);border-radius:10px;padding:14px;user-select:all}
+.pl{display:flex;flex-direction:column;gap:4px;max-height:340px;overflow:auto}
+.pl-row{display:flex;gap:4px;align-items:center}
+.pl-row input{flex:1}
+.box{background:var(--surface-2);border-radius:9px;padding:10px 12px}
+.tabs{align-items:center}
+/* diálogos */
+dialog{border:0;border-radius:14px;padding:0;background:var(--surface);color:var(--fg);width:min(600px,calc(100vw - 32px));max-height:calc(100vh - 32px);box-shadow:0 24px 70px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(10,16,34,.5)}
+#dlg-form{display:flex;flex-direction:column;max-height:calc(100vh - 32px)}
+.dlg-h{padding:15px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.dlg-h h2{margin:0;font-family:var(--f-display);font-size:18px;font-weight:700}
+.dlg-b{padding:16px 20px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px;overflow:auto}
+.dlg-f{padding:13px 20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.f.full{grid-column:1/-1}
+.f>label,.f>.lb{font-size:12px;font-weight:700;color:var(--muted)}
+.f .hint{font-size:12px;color:var(--muted)}
+.f .err{font-size:12px;color:var(--bad);font-weight:600}
+.checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 12px}
+.checks label{display:flex;gap:7px;align-items:flex-start;font-size:13.5px;cursor:pointer;padding:3px 0}
+.checks input{accent-color:var(--s-pro);margin-top:3px}
+.results{border:1px solid var(--line);border-radius:8px;max-height:190px;overflow:auto}
+.results button{display:flex;justify-content:space-between;width:100%;border:0;border-bottom:1px solid var(--line);background:none;padding:8px 10px;cursor:pointer;text-align:left;gap:8px}
+.results button:hover,.results button[aria-pressed="true"]{background:var(--accent-soft)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(22px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:600;z-index:70;max-width:calc(100vw - 32px)}
+@media (max-width:1100px){.flow{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.mgrid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:820px){.split{grid-template-columns:minmax(0,1fr)}.facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.flow{grid-template-columns:minmax(0,1fr)}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dlg-b{grid-template-columns:minmax(0,1fr)}.checks{grid-template-columns:minmax(0,1fr)}.me b{max-width:140px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="gut"><div class="in">
+    <div class="top-row">
+      <div class="brand">
+        <svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="10" fill="var(--accent)"/><rect x="0" y="34" width="40" height="6" fill="var(--yellow)"/><rect x="26" y="34" width="14" height="6" fill="var(--red)"/><path d="M13 11c-3 0-5 2.6-5 6.4 0 3 1.3 5 2.2 7.6.8 2.4 1 7 3.3 7 2 0 1.9-5.4 3.6-5.4h5.8c1.7 0 1.6 5.4 3.6 5.4 2.3 0 2.5-4.6 3.3-7 .9-2.6 2.2-4.6 2.2-7.6 0-3.8-2-6.4-5-6.4-2.6 0-3.8 1.5-7 1.5S15.6 11 13 11z" fill="var(--yellow)"/></svg>
+        <div><b>CORA</b><small>Controle Odontológico de Registros e Atendimentos</small><div class="inst" id="inst"></div></div>
+      </div>
+      <div class="top-meta">
+        <span class="clock" id="clock"></span>
+        <div class="me" id="me"></div>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs" role="tablist"></nav>
+  </div></div>
+</header>
+<main class="gut"><div class="in stack" id="view"></div></main>
+<dialog id="dlg"><form id="dlg-form" novalidate></form></dialog>
+<div id="tip" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+"use strict";
+/* ===== utilidades ===== */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const TZ = "America/Sao_Paulo";
+const fKey = new Intl.DateTimeFormat("en-CA", {timeZone:TZ, year:"numeric", month:"2-digit", day:"2-digit"});
+const fHora = new Intl.DateTimeFormat("pt-BR", {timeZone:TZ, hour:"2-digit", minute:"2-digit"});
+const fHoraNum = new Intl.DateTimeFormat("en-GB", {timeZone:TZ, hour:"2-digit", hourCycle:"h23"});
+const fDataHora = new Intl.DateTimeFormat("pt-BR", {timeZone:TZ, day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit"});
+const fRelogio = new Intl.DateTimeFormat("pt-BR", {timeZone:TZ, weekday:"short", day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit"});
+const keyBR = (d = new Date()) => fKey.format(d);              // AAAA-MM-DD no horário de Brasília
+const horaBR = (iso) => iso ? fHora.format(new Date(iso)) : "—";
+const dataHoraBR = (iso) => iso ? fDataHora.format(new Date(iso)) : "—";
+const kParse = (k) => { const [y,m,d] = k.split("-").map(Number); return new Date(Date.UTC(y, m-1, d, 12)); };
+const kFmt = (d) => d.toISOString().slice(0,10);
+const kAdd = (k, n) => { const d = kParse(k); d.setUTCDate(d.getUTCDate()+n); return kFmt(d); };
+const kDate = (k, o) => kParse(k).toLocaleDateString("pt-BR", {timeZone:"UTC", ...o});
+const kShort = (k) => k ? kDate(k, {day:"2-digit", month:"2-digit", year:"numeric"}) : "—";
+const mins = (a, b) => (new Date(b) - new Date(a)) / 60000;
+const durTxt = (m) => { if (m == null || isNaN(m)) return "—"; m = Math.max(0, Math.round(m)); if (m < 60) return m + " min"; return Math.floor(m/60) + " h " + String(m%60).padStart(2,"0") + " min"; };
+const digits = (s) => String(s||"").replace(/\D/g, "");
+const maskCPF = (s) => { const d = digits(s).slice(0,11); return d.replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d{1,2})$/,"$1-$2"); };
+const maskTel = (s) => { const d = digits(s).slice(0,11); return d.length <= 10 ? d.replace(/(\d{2})(\d)/,"($1) $2").replace(/(\d{4})(\d)/,"$1-$2") : d.replace(/(\d{2})(\d)/,"($1) $2").replace(/(\d{5})(\d)/,"$1-$2"); };
+const cpfOk = (s) => { const d = digits(s); if (d.length !== 11 || /^(\d)\1+$/.test(d)) return false; const c = (n) => { let t = 0; for (let i=0;i<n;i++) t += +d[i]*(n+1-i); const r = (t*10)%11; return r===10?0:r; }; return c(9)===+d[9] && c(10)===+d[10]; };
+const idade = (n) => { if (!n) return null; const [y,m,d] = n.split("-").map(Number); const [ty,tm,td] = keyBR().split("-").map(Number); let a = ty-y; if (tm<m || (tm===m && td<d)) a--; return a; };
+const norm = (s) => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const matKey = (s) => String(s||"").trim().toUpperCase().replace(/[^A-Z0-9_.\-]/g, "");
+
+const ETAPAS = {
+  recepcao:     {nome:"Check-in na recepção", curto:"Recepção"},
+  clinica:      {nome:"Entrada na clínica", curto:"Em clínica"},
+  procedimento: {nome:"Procedimento finalizado", curto:"Procedimento"},
+  provisoria:   {nome:"Liberação provisória", curto:"Retorna"},
+  alta:         {nome:"Alta (liberação final)", curto:"Alta"},
+};
+const FUNCOES = {aluno:"Aluno(a)", professor:"Professor(a)", rt:"Responsável técnico", recepcao:"Recepção", outro:"Outro colaborador"};
+const ADMINS = ["professor","rt","recepcao"];
+const PROCS_PADRAO = ["Anamnese e exame clínico","Radiografia","Profilaxia","Raspagem e alisamento radicular","Aplicação tópica de flúor","Selante","Restauração em resina composta","Restauração em ionômero de vidro","Tratamento endodôntico","Exodontia","Cirurgia periodontal","Prótese (moldagem / ajuste)","Urgência odontológica","Orientação de higiene oral"];
+
+/* ===== estado ===== */
+const S = {
+  membros:[], pacientes:[], atend:[], semestres:null, procs:null,
+  inst:"", view:"checkin", idSub:"alunos", progMode:"paciente", progSel:null, progBusca:"", progFiltro:"todos", logDia:"",
+  progAluno:null, prodIni:"", prodFim:"", prodBusca:"",
+  memBusca:"", memFiltro:"", pacBusca:"", per:"semana", ref:keyBR(),
+  meMat:null, mode:"loading", canWrite:true, canAdmin:true, isOwner:true, uid:null,
+};
+let B = null; // backend
+const LKEY = "odonto-escola-v1";
+const local = {
+  load(){ try { const v = JSON.parse(localStorage.getItem(LKEY)||"null"); if (v) Object.assign(S, {membros:v.membros||[], pacientes:v.pacientes||[], atend:v.atend||[], semestres:v.semestres||null, procs:v.procs||null, inst:v.inst||""}); S.meMat = localStorage.getItem(LKEY+"-me"); } catch {} },
+  save(){ try { localStorage.setItem(LKEY, JSON.stringify({membros:S.membros, pacientes:S.pacientes, atend:S.atend, semestres:S.semestres, procs:S.procs, inst:S.inst})); } catch {} },
+  col(c){ return c==="atendimentos" ? "atend" : c; },
+  async add(c, d){ const id = Date.now().toString(36)+Math.random().toString(36).slice(2,7); S[this.col(c)].push({id, ...d}); this.save(); render(); return id; },
+  async set(c, id, d){ if (c==="config") { if (id==="semestres") S.semestres = d.lista; else if (id==="instituicao") S.inst = d.nome || ""; else S.procs = d.lista; this.save(); render(); return; } const a = S[this.col(c)], i = a.findIndex(x=>x.id===id); if (i>=0) a[i] = {id, ...d}; else a.push({id, ...d}); this.save(); render(); },
+  async patch(c, id, d){ const a = S[this.col(c)], i = a.findIndex(x=>x.id===id); if (i>=0) a[i] = {...a[i], ...d}; this.save(); render(); },
+  async del(c, id){ const k = this.col(c); S[k] = S[k].filter(x=>x.id!==id); this.save(); render(); },
+  async link(mat){ S.meMat = mat; try { mat ? localStorage.setItem(LKEY+"-me", mat) : localStorage.removeItem(LKEY+"-me"); } catch {} render(); },
+  async claimedByOther(){ return false; },
+  async relink(old, nova){ if (S.meMat === old) await this.link(nova); },
+  async unlinkMat(mat){ if (S.meMat === mat) await this.link(null); },
+};
+function remote(db){
+  const byMat = async (mat) => (await db.collection("vinculos").where("matricula","==",mat).get()).docs;
+  return {
+    async add(c, d){ return (await db.collection(c).add(d)).id; },
+    async set(c, id, d){ await db.doc(c+"/"+id).set(d); },
+    async patch(c, id, d){ await db.doc(c+"/"+id).update(d); },
+    async del(c, id){ await db.doc(c+"/"+id).delete(); },
+    async link(mat){ if (!S.uid) throw {code:"no_user"}; if (mat) await db.doc("vinculos/"+S.uid).set({matricula:mat, em:new Date().toISOString()}); else await db.doc("vinculos/"+S.uid).delete(); S.meMat = mat; render(); },
+    async claimedByOther(mat){ return (await byMat(mat)).some(d => d.id !== S.uid); },
+    async relink(old, nova){ for (const d of await byMat(old)) await db.doc("vinculos/"+d.id).set({matricula:nova, em:new Date().toISOString()}); if (S.meMat === old) S.meMat = nova; },
+    async unlinkMat(mat){ for (const d of await byMat(mat)) await db.doc("vinculos/"+d.id).delete(); if (S.meMat === mat) S.meMat = null; },
+  };
+}
+const strip = (o) => { const r = {...o}; delete r.id; return r; };
+async function save(fn, ok){
+  try { await fn(); if (ok) toast(ok); return true; }
+  catch (e) {
+    const c = e && e.code;
+    if (c === "quota_exceeded") toast("Limite de armazenamento atingido. Exclua registros antigos.");
+    else if (c === "invalid_argument") toast("Você não tem permissão para esta ação. Peça acesso à coordenação.");
+    else if (c === "no_user") toast("Entre na sua conta do claude.ai para vincular a matrícula.");
+    else toast("Não foi possível salvar. Verifique a conexão e tente de novo.");
+    return false;
+  }
+}
+
+/* ===== consultas aos dados e permissões ===== */
+const membro = (mat) => S.membros.find(m => m.matricula === mat);
+const nomeM = (mat) => membro(mat)?.nome || (mat ? "Matrícula " + mat : "—");
+const paciente = (id) => S.pacientes.find(p => p.id === id);
+const me = () => membro(S.meMat);
+const papel = () => me()?.tipo || null;
+const vencido = (m) => m?.temporario && m.validade && m.validade < keyBR();
+// Professor, responsável técnico e recepção têm critérios de administrador.
+const isAdmin = () => S.isOwner || (S.canAdmin && ADMINS.includes(papel()));
+// Cadastro de paciente e check-in na recepção: só a recepção.
+const isRecep = () => S.isOwner || (S.canAdmin && papel() === "recepcao");
+const isAluno = () => S.canWrite && papel() === "aluno" && !vencido(me());
+const podeEtapas = () => isAdmin() || isAluno();
+const equipe = (a) => [a.alunoMatricula, a.auxiliarMatricula, a.circulanteMatricula].filter(Boolean);
+const meu = (a) => !!S.meMat && equipe(a).includes(S.meMat);
+const podeAgir = (a) => isAdmin() || (isAluno() && (a.etapa === "recepcao" || meu(a)));
+const ts = (a, e) => (a.eventos||[]).find(x => x.etapa === e)?.ts || null;
+const fechado = (a) => a.etapa === "provisoria" || a.etapa === "alta";
+const ordemEtapa = ["recepcao","clinica","procedimento","provisoria","alta"];
+const procsLista = () => S.procs?.length ? S.procs : PROCS_PADRAO;
+const porNome = (a,b) => a.nome.localeCompare(b.nome,"pt-BR");
+const alunos = () => S.membros.filter(m => m.tipo === "aluno" && m.ativo !== false && !vencido(m)).sort(porNome);
+const professores = () => S.membros.filter(m => (m.tipo === "professor" || m.tipo === "rt") && m.ativo !== false).sort(porNome);
+const statusPac = (p) => {
+  const as = S.atend.filter(a => a.pacienteId === p.id).sort((a,b)=>(a.criadoEm||"").localeCompare(b.criadoEm||""));
+  const ult = as[as.length-1];
+  if (!ult) return {k:"novo", t:"Sem atendimentos", ult};
+  if (!fechado(ult)) return {k:ult.etapa, t:"Em atendimento agora", ult};
+  if (ult.etapa === "alta") return {k:"alta", t:"Alta", ult};
+  return {k:"provisoria", t:"Em tratamento", ult};
+};
+const alunosTxt = (a) => a.alunoMatricula ? equipe(a).map(nomeM).join(" + ") : "a definir";
+const tamEquipe = (a) => ["", "solo", "dupla", "trio"][equipe(a).length] || "";
+
+/* ===== render ===== */
+const view = $("#view");
+const ICON = {
+  checkin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg>',
+  ident:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="11" r="2.5"/><path d="M5.5 17c.6-1.8 2-2.7 3.5-2.7s2.9.9 3.5 2.7M15 10h3M15 14h3"/></svg>',
+  prog:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><path d="M5 8v8M10 6h10M10 12h7M10 18h10"/></svg>',
+  met:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+};
+const liberado = () => S.isOwner || !!me();
+function renderTabs(){
+  let tabs = [];
+  if (liberado()) {
+    tabs.push(["checkin","Check-in",ICON.checkin]);
+    if (isAdmin()) tabs.push(["identificacao","Identificação",ICON.ident],["progresso","Progresso",ICON.prog],["metricas","Métricas",ICON.met]);
+  }
+  if (!tabs.some(t => t[0] === S.view)) S.view = "checkin";
+  $("#tabs").innerHTML = tabs.map(([k,n,i]) => `<button class="tab" role="tab" type="button" data-tab="${k}" aria-selected="${S.view===k}">${i}${n}</button>`).join("")
+    + (isAdmin() ? `<button class="tab" type="button" data-act="config" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Procedimentos</button>` : "");
+}
+function renderInst(){
+  const el = $("#inst"); if (!el) return;
+  const pode = isAdmin() && S.canWrite;
+  el.className = "inst" + (S.inst ? "" : " vazio");
+  el.innerHTML = S.inst ? `<span>${esc(S.inst)}</span>${pode ? `<button type="button" data-act="inst" aria-label="Editar nome da instituição">editar</button>` : ""}`
+    : pode ? `<button type="button" data-act="inst" style="padding-left:0">+ Definir nome da clínica / instituição</button>` : "";
+  document.title = S.inst ? `CORA · ${S.inst}` : "CORA";
+}
+function renderMe(){
+  const m = me();
+  $("#me").innerHTML = m ? `<span>Você:</span><b>${esc(m.nome)}</b><span class="mono">${esc(m.temporario ? "Acesso temporário" : FUNCOES[m.tipo]||"")}</span><button class="btn sm ghost" type="button" data-act="identificar">Trocar</button>`
+    : S.isOwner ? `<span>Responsável pelo app</span><button class="btn sm primary" type="button" data-act="identificar">Informar matrícula</button>` : `<span>Não identificado</span>`;
+}
+function tick(){
+  $("#clock").innerHTML = `Horário de Brasília · <b>${esc(fRelogio.format(new Date()))}</b>`;
+  document.querySelectorAll("[data-since]").forEach(el => { const m = mins(el.dataset.since, new Date()); el.textContent = durTxt(m); el.classList.toggle("long", m > 30); });
+}
+function vGate(){
+  if (S.mode === "loading") return `<div class="panel"><div class="empty">Carregando…</div></div>`;
+  if (!S.membros.length) return `<div class="gate panel"><div class="panel-b stack"><h1>Sistema ainda não configurado</h1><p>Peça ao responsável pelo app para cadastrar a recepção, os professores e os alunos.</p></div></div>`;
+  return `<div class="gate panel"><div class="panel-b stack">
+    <div><h1>Entrar no CORA</h1><p style="font-size:12.5px;margin:0">Controle Odontológico de Registros e Atendimentos</p>${S.inst?`<p class="inst" style="margin:2px 0 8px">${esc(S.inst)}</p>`:""}<p>Informe sua matrícula institucional ou o código de acesso temporário entregue pela recepção.</p></div>
+    <div class="f"><label for="gate-mat">Matrícula ou código temporário</label><input type="text" id="gate-mat" autocomplete="off" placeholder="Ex.: 20231045 ou TMP-4821"><span class="err" id="gate-err"></span></div>
+    <button class="btn primary" type="button" data-act="gate" style="align-self:flex-start">Entrar</button>
+  </div></div>`;
+}
+function render(){
+  const ae = document.activeElement, aid = ae && view.contains(ae) ? ae.id : null;
+  const sel = aid && ae.selectionStart != null ? [ae.selectionStart, ae.selectionEnd] : null;
+  renderTabs(); renderMe(); renderInst();
+  let pre = "";
+  if (S.mode === "local") pre += `<div class="banner warn">Modo local: os dados ficam apenas neste navegador. Abra pelo claude.ai, conectado, para salvar na nuvem e usar em equipe.</div>`;
+  if (S.mode === "slow") pre += `<div class="banner warn">Os dados ainda não chegaram do servidor. A página atualiza sozinha assim que a conexão responder.</div>`;
+  if (!liberado()) { view.innerHTML = pre + vGate(); restore(aid, sel); tick(); return; }
+  const m = me();
+  if (S.mode !== "loading" && !S.membros.length && isAdmin()) pre += `<div class="banner"><span><b>Primeiro passo:</b> cadastre a recepção, os professores e os alunos na aba Identificação.</span><button class="btn sm primary" type="button" data-go="identificacao">Ir para Identificação</button></div>`;
+  else if (S.mode !== "loading" && !m && S.isOwner) pre += `<div class="banner"><span>Você tem acesso total como responsável pelo app. Informe sua matrícula para assinar os registros com seu nome.</span><button class="btn sm primary" type="button" data-act="identificar">Informar matrícula</button></div>`;
+  if (m && ADMINS.includes(m.tipo) && !S.canAdmin && S.mode === "db") pre += `<div class="banner warn">Sua função é de administrador, mas sua conta ainda não tem acesso de Editor a este app. Peça ao responsável para compartilhar com você como Editor.</div>`;
+  if (vencido(m)) pre += `<div class="banner warn">Seu código temporário venceu em ${esc(kShort(m.validade))}. Procure a recepção para renovar ou cadastrar sua matrícula definitiva.</div>`;
+  if (!S.canWrite) pre += `<div class="banner">Você tem acesso somente de leitura.</div>`;
+  const fn = {checkin:vCheckin, identificacao:vIdent, progresso:vProgresso, metricas:vMetricas}[S.view];
+  view.innerHTML = pre + fn();
+  restore(aid, sel); tick();
+}
+function restore(aid, sel){ if (!aid) return; const el = document.getElementById(aid); if (el) { el.focus(); if (sel && el.setSelectionRange) try { el.setSelectionRange(sel[0], sel[1]); } catch {} } }
+
+/* ----- aba Check-in ----- */
+function cardAt(a){
+  const p = paciente(a.pacienteId), hoje = keyBR();
+  const steps = ordemEtapa.filter(e => ts(a,e)).map(e => `<span>${esc(ETAPAS[e].curto)} <i>${esc(horaBR(ts(a,e)))}</i></span>`).join("");
+  const pode = podeAgir(a);
+  let acts = "", extra = "";
+  if (a.etapa === "recepcao") { extra = `<span class="wait" data-since="${esc(ts(a,"recepcao"))}"></span>`; acts = `<button class="btn sm go-cli" type="button" data-step="clinica" data-id="${a.id}">Registrar entrada na clínica</button>`; }
+  else if (a.etapa === "clinica") acts = `<button class="btn sm go-pro" type="button" data-step="procedimento" data-id="${a.id}">Finalizar procedimento</button>`;
+  else if (a.etapa === "procedimento") acts = `<button class="btn sm go-prov" type="button" data-step="provisoria" data-id="${a.id}">Liberação provisória</button><button class="btn sm go-alta" type="button" data-step="alta" data-id="${a.id}">Alta</button>`;
+  else extra = `<span class="pill e-${a.etapa}">${a.etapa==="alta"?"Alta":"Retorna"+(a.retornoPrevisto?" "+esc(kShort(a.retornoPrevisto).slice(0,5)):"")}</span>`;
+  const verOk = isAdmin() || (isAluno() && meu(a));
+  return `<div class="card${isAluno() && meu(a) ? " mine" : ""}">
+    <div class="card-top">${verOk ? `<b data-ver="${a.id}" role="button" tabindex="0">${esc(p?.nome || "Paciente removido")}</b>` : `<b style="cursor:default">${esc(p?.nome || "Paciente removido")}</b>`}${extra}</div>
+    <div class="sub">Pront. ${esc(p?.prontuario||"—")} · ${equipe(a).length > 1 ? "Equipe (" + tamEquipe(a) + ")" : "Aluno(a)"}: ${esc(alunosTxt(a))}${a.dataBR!==hoje?` · <span class="old">aberto desde ${esc(kShort(a.dataBR))}</span>`:""}</div>
+    ${p?.alergias && a.etapa !== "alta" && a.etapa !== "provisoria" ? `<div class="sub" style="color:var(--bad);font-weight:600">Atenção: ${esc(p.alergias)}</div>` : ""}
+    <div class="steps">${steps}</div>
+    ${a.procedimentos?.length && !fechado(a) ? `<div class="chips">${a.procedimentos.map(x=>`<span class="chip">${esc(x)}</span>`).join("")}</div>` : ""}
+    ${pode && acts && S.canWrite ? `<div class="acts">${acts}</div>` : ""}
+  </div>`;
+}
+function vCheckin(){
+  const hoje = keyBR();
+  const ativos = S.atend.filter(a => a.dataBR === hoje || !fechado(a));
+  const col = (k, t, list, hint) => `<section class="col c-${k}"><div class="col-h"><b>${t}</b><span>${list.length}</span></div>${list.length ? list.map(cardAt).join("") : `<div class="empty" style="padding:14px 4px;font-size:13px">${hint}</div>`}</section>`;
+  const by = (e) => ativos.filter(a => a.etapa === e).sort((a,b) => (ts(a,e)||"").localeCompare(ts(b,e)||""));
+  const lib = ativos.filter(fechado).sort((a,b) => (ts(b,b.etapa)||"").localeCompare(ts(a,a.etapa)||""));
+  const esperas = ativos.filter(a => ts(a,"clinica") && a.dataBR===hoje).map(a => mins(ts(a,"recepcao"), ts(a,"clinica")));
+  const media = esperas.length ? esperas.reduce((x,y)=>x+y,0)/esperas.length : null;
+  const papelTxt = isRecep() && !S.isOwner ? "Recepção: cadastre pacientes e registre a chegada." : isAluno() ? "Registre a entrada do paciente na clínica, finalize o procedimento e libere o paciente. Seus atendimentos aparecem destacados." : "";
+  return `<div class="head"><div><h1>Check-in</h1><p>${esc(kDate(hoje,{weekday:"long",day:"numeric",month:"long"}))} · espera média hoje: <b>${durTxt(media)}</b> · ${ativos.filter(a=>a.dataBR===hoje).length} check-in(s)</p>${papelTxt?`<p style="font-size:13px">${papelTxt}</p>`:""}</div>
+    ${isRecep() && S.canWrite ? `<div class="row"><button class="btn" type="button" data-act="novo-pac">Cadastrar paciente</button><button class="btn primary" type="button" data-act="checkin">+ Check-in na recepção</button></div>` : ""}</div>
+  ${S.mode === "loading" ? `<div class="panel"><div class="empty">Carregando atendimentos…</div></div>` : `
+  <div class="flow">
+    ${col("recepcao","Aguardando na recepção", by("recepcao"), "Ninguém aguardando.")}
+    ${col("clinica","Em atendimento", by("clinica"), "Nenhum paciente em clínica.")}
+    ${col("procedimento","Aguardando liberação", by("procedimento"), "Nenhum procedimento aguardando liberação.")}
+    ${col("alta","Liberados hoje", lib, "Ninguém liberado ainda hoje.")}
+  </div>
+  <p style="color:var(--muted);font-size:12.5px;margin:0">Todos os horários são registrados no horário de Brasília (America/São_Paulo). O tempo de espera fica vermelho após 30 minutos.</p>`}`;
+}
+
+/* ----- aba Identificação ----- */
+function vIdent(){
+  const nAl = S.membros.filter(m=>m.tipo==="aluno").length, nCo = S.membros.length - nAl;
+  if (!["alunos","colaboradores","pacientes"].includes(S.idSub)) S.idSub = "alunos";
+  const sub = `<div class="seg" role="group">
+    <button type="button" data-idsub="alunos" aria-pressed="${S.idSub==="alunos"}">Alunos (${nAl})</button>
+    <button type="button" data-idsub="colaboradores" aria-pressed="${S.idSub==="colaboradores"}">Colaboradores (${nCo})</button>
+    <button type="button" data-idsub="pacientes" aria-pressed="${S.idSub==="pacientes"}">Pacientes (${S.pacientes.length})</button></div>`;
+  if (S.idSub !== "pacientes") {
+    const al = S.idSub === "alunos";
+    const q = norm(S.memBusca);
+    const lista = S.membros.filter(m => (al ? m.tipo === "aluno" : m.tipo !== "aluno")
+      && (!S.memFiltro || m.tipo === S.memFiltro || (S.memFiltro==="temp" && m.temporario) || (S.memFiltro==="def" && !m.temporario))
+      && (!q || norm(m.nome).includes(q) || norm(m.matricula).includes(q))).sort(porNome);
+    const filtros = al ? `<option value="">Todos os alunos</option><option value="def" ${S.memFiltro==="def"?"selected":""}>Com matrícula</option><option value="temp" ${S.memFiltro==="temp"?"selected":""}>Com código temporário</option>`
+      : `<option value="">Todas as funções</option>${Object.entries(FUNCOES).filter(([k])=>k!=="aluno").map(([k,n])=>`<option value="${k}" ${S.memFiltro===k?"selected":""}>${n}</option>`).join("")}`;
+    return `<div class="head"><div><h1>Identificação</h1><p>${al ? "Alunos cadastrados por matrícula institucional e nome completo. Quem ainda não tem matrícula recebe um código temporário." : "Professores, responsável técnico, recepção e demais colaboradores. Professores, responsável técnico e recepção são administradores."}</p></div>
+      ${S.canWrite ? (al ? `<div class="row"><button class="btn" type="button" data-act="novo-temp">Gerar código temporário</button><button class="btn primary" type="button" data-act="novo-aluno">+ Cadastrar aluno</button></div>` : `<button class="btn primary" type="button" data-act="novo-colab">+ Cadastrar colaborador</button>`) : ""}</div>
+    ${sub}
+    <section class="panel"><div class="panel-h" style="gap:10px">
+      <div class="row" style="flex:1;min-width:0"><input type="search" id="mem-busca" placeholder="Buscar por nome, matrícula${al?" ou código":""}" value="${esc(S.memBusca)}" style="max-width:340px" aria-label="Buscar">
+      <select id="mem-filtro" style="width:auto" aria-label="Filtrar">${filtros}</select></div></div>
+      <div class="tbl-wrap"><table><thead><tr><th>${al?"Matrícula / código":"Matrícula"}</th><th>Nome completo</th>${al?"":"<th>Função</th>"}<th>${al?"Período / turma":"Setor"}</th><th>Situação</th></tr></thead><tbody>
+      ${lista.length ? lista.map(m=>`<tr class="click" data-edit-m="${esc(m.matricula)}"><td class="mono">${esc(m.matricula)}</td><td><b>${esc(m.nome)}</b></td>${al?"":`<td>${esc(FUNCOES[m.tipo]||m.tipo)}${ADMINS.includes(m.tipo)?' <span class="pill" style="background:var(--accent-soft);color:var(--accent)">admin</span>':""}</td>`}<td>${esc(m.periodo||"—")}</td><td>${m.ativo===false?'<span class="pill e-provisoria">Inativo</span>': vencido(m)?'<span class="pill e-provisoria">Código vencido</span>' : m.temporario?`<span class="pill e-recepcao">Temporário até ${esc(kShort(m.validade).slice(0,5))}</span>`:'<span class="pill e-alta">Ativo</span>'}</td></tr>`).join("")
+        : `<tr><td colspan="${al?4:5}"><div class="empty">${S.membros.some(m => al ? m.tipo==="aluno" : m.tipo!=="aluno") ? "Ninguém encontrado com esse filtro." : al ? "Nenhum aluno cadastrado ainda." : "Nenhum colaborador cadastrado ainda."}</div></td></tr>`}
+      </tbody></table></div></section>`;
+  }
+  const q = norm(S.pacBusca), qd = digits(S.pacBusca);
+  const lista = S.pacientes.filter(p => !q || norm(p.nome).includes(q) || String(p.prontuario||"").includes(S.pacBusca.trim()) || (qd.length>=3 && (digits(p.cpf).includes(qd) || digits(p.telefone).includes(qd)))).sort(porNome);
+  return `<div class="head"><div><h1>Identificação</h1><p>Pacientes cadastrados pela recepção. O aluno é definido a cada atendimento, na entrada da clínica.</p></div>
+    ${isRecep() && S.canWrite ? `<button class="btn primary" type="button" data-act="novo-pac">+ Cadastrar paciente</button>` : ""}</div>
+  ${sub}
+  ${!isRecep() ? `<div class="banner">Somente a recepção cadastra e altera dados de pacientes.</div>` : ""}
+  <section class="panel"><div class="panel-h"><input type="search" id="pac-busca" placeholder="Buscar por nome, prontuário, CPF ou telefone" value="${esc(S.pacBusca)}" style="max-width:380px" aria-label="Buscar paciente"></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Pront.</th><th>Paciente</th><th>Idade</th><th>CPF</th><th>Telefone</th><th>Último atendimento</th><th>Situação</th></tr></thead><tbody>
+    ${lista.length ? lista.map(p=>{ const st = statusPac(p); return `<tr class="click" data-edit-p="${p.id}"><td class="mono">${esc(p.prontuario||"—")}</td><td><b>${esc(p.nome)}</b>${p.alergias?` <span class="pill" style="background:var(--bad-soft);color:var(--bad)">alerta</span>`:""}</td><td>${idade(p.nascimento) ?? "—"}</td><td class="mono">${esc(p.cpf||"—")}</td><td class="mono">${esc(p.telefone||"—")}</td><td>${st.ult ? esc(kShort(st.ult.dataBR))+`<div style="color:var(--muted);font-size:12.5px">${esc(alunosTxt(st.ult))}</div>` : "—"}</td><td><span class="pill ${st.k==="novo"?"":"e-"+st.k}">${esc(st.t)}</span></td></tr>`; }).join("")
+      : `<tr><td colspan="7"><div class="empty">${S.pacientes.length ? "Nenhum paciente encontrado." : "Nenhum paciente cadastrado ainda."}</div></td></tr>`}
+    </tbody></table></div></section>`;
+}
+
+/* ----- aba Progresso ----- */
+function visitaHTML(a, opts = {}){
+  const ev = [...(a.eventos||[])].sort((x,y)=>x.ts.localeCompare(y.ts));
+  const espera = ts(a,"clinica") ? mins(ts(a,"recepcao"), ts(a,"clinica")) : null;
+  const clin = ts(a,"procedimento") && ts(a,"clinica") ? mins(ts(a,"clinica"), ts(a,"procedimento")) : null;
+  const titulo = opts.comPaciente ? `${esc(paciente(a.pacienteId)?.nome||"—")} · ${esc(kDate(a.dataBR,{day:"2-digit",month:"2-digit",year:"numeric"}))}` : esc(kDate(a.dataBR,{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"}));
+  return `<article class="visit"><div class="visit-h"><div><b>${titulo}</b> <span style="color:var(--muted);font-size:12.5px">· Operador: ${esc(a.alunoMatricula?nomeM(a.alunoMatricula):"a definir")}${a.auxiliarMatricula?" · Auxiliar: "+esc(nomeM(a.auxiliarMatricula)):""}${a.circulanteMatricula?" · Circulante: "+esc(nomeM(a.circulanteMatricula)):""}${a.alunoMatricula?" ("+tamEquipe(a)+")":""}${a.professorMatricula?" · Supervisão: "+esc(nomeM(a.professorMatricula)):""}</span></div>
+    <div class="row"><span class="pill e-${a.etapa}">${esc(ETAPAS[a.etapa].nome)}</span>${opts.botao!==false && isAdmin()?`<button class="btn sm" type="button" data-ver="${a.id}">Detalhes</button>`:""}</div></div>
+    <div class="visit-b">
+      <ol class="tl">${ev.map(e=>`<li class="c-${e.etapa}"><div><b>${esc(ETAPAS[e.etapa]?.nome||e.etapa)}</b> · <span class="t">${esc(dataHoraBR(e.ts))}</span></div><div class="n">por ${esc(nomeM(e.por))}${e.nota?" — "+esc(e.nota):""}</div></li>`).join("")}</ol>
+      <div class="row" style="font-size:13px;color:var(--muted)"><span>Espera: <b style="color:var(--fg)">${durTxt(espera)}</b></span><span>Tempo em clínica: <b style="color:var(--fg)">${durTxt(clin)}</b></span>${a.retornoPrevisto?`<span>Retorno previsto: <b style="color:var(--fg)">${esc(kShort(a.retornoPrevisto))}</b></span>`:""}</div>
+      ${a.procedimentos?.length ? `<div class="chips">${a.procedimentos.map(x=>`<span class="chip">${esc(x)}</span>`).join("")}${a.dentes?`<span class="chip" style="background:var(--surface-2);color:var(--fg)">Dentes/região: ${esc(a.dentes)}</span>`:""}</div>` : ""}
+      ${a.descricao ? `<div class="desc">${esc(a.descricao)}</div>` : ""}
+    </div></article>`;
+}
+function semAtual(k = keyBR()){ return semestresLista(+k.slice(0,4)).find(s => k >= s.inicio && k <= s.fim); }
+function vProducao(){
+  if (!S.prodIni) { const s = semAtual(); S.prodIni = s ? s.inicio : keyBR().slice(0,4)+"-01-01"; S.prodFim = s ? s.fim : keyBR(); }
+  const inRange = (a) => (!S.prodIni || a.dataBR >= S.prodIni) && (!S.prodFim || a.dataBR <= S.prodFim);
+  const lista = S.atend.filter(inRange);
+  const q = norm(S.prodBusca);
+  const als = S.membros.filter(m => m.tipo === "aluno").map(m => {
+    const op = lista.filter(a => a.alunoMatricula === m.matricula), aux = lista.filter(a => a.auxiliarMatricula === m.matricula), circ = lista.filter(a => a.circulanteMatricula === m.matricula);
+    return {m, op, aux, circ, procs: op.reduce((n,a)=>n+(a.procedimentos?.length||0),0)};
+  }).filter(x => !q || norm(x.m.nome).includes(q) || norm(x.m.matricula).includes(q)).sort((a,b)=>b.op.length-a.op.length || porNome(a.m,b.m));
+  const s = semAtual();
+  const presets = [["sem","Semestre atual", s?.inicio, s?.fim],["mes","Mês atual", keyBR().slice(0,8)+"01", keyBR()],["tudo","Todo o período","",""]];
+  const x = als.find(y => y.m.matricula === S.progAluno);
+  let det = `<div class="empty" style="padding:40px 10px">Selecione um aluno para acompanhar a produção.</div>`;
+  if (x) {
+    const todos = [...new Set([...x.op, ...x.aux, ...x.circ])].sort((a,b)=>(b.criadoEm||"").localeCompare(a.criadoEm||""));
+    const pc = {}; x.op.forEach(a => (a.procedimentos||[]).forEach(p => pc[p] = (pc[p]||0)+1));
+    const top = Object.entries(pc).sort((a,b)=>b[1]-a[1]), mx = top[0]?.[1] || 1;
+    const concl = x.op.filter(a => ts(a,"procedimento")).length;
+    det = `<div class="panel-b stack">
+      <div class="ph"><div><h2>${esc(x.m.nome)}</h2><span style="color:var(--muted)">${esc(x.m.temporario?"Código temporário ":"Matrícula ")}${esc(x.m.matricula)}${x.m.periodo?" · "+esc(x.m.periodo):""}</span></div></div>
+      <div class="kmini">
+        <div><span>Atendimentos (operador)</span><b>${x.op.length}</b></div>
+        <div><span>Como auxiliar</span><b>${x.aux.length}</b></div>
+        <div><span>Como circulante</span><b>${x.circ.length}</b></div>
+        <div><span>Pacientes</span><b>${new Set(x.op.map(a=>a.pacienteId)).size}</b></div>
+        <div><span>Procedimentos</span><b>${x.procs}</b></div>
+        <div><span>Altas</span><b>${x.op.filter(a=>a.etapa==="alta").length}</b></div>
+        <div><span>Tempo médio em clínica</span><b style="font-size:18px">${durTxt((()=>{ const l = x.op.filter(a=>ts(a,"clinica")&&ts(a,"procedimento")).map(a=>mins(ts(a,"clinica"),ts(a,"procedimento"))); return l.length ? l.reduce((p,c)=>p+c,0)/l.length : null; })())}</b></div>
+      </div>
+      <div><h3 class="h3">Procedimentos realizados como operador</h3>${top.length ? top.map(([n,v])=>`<div class="hb" data-tip="${esc(n)}: ${v}"><span class="lbl" title="${esc(n)}">${esc(n)}</span><div class="trk"><div class="fill" style="width:${v/mx*100}%"></div></div><span class="v">${v}</span></div>`).join("") : `<div class="empty">Nenhum procedimento no período.</div>`}</div>
+      <div class="stack"><h3 class="h3" style="margin:0">Atendimentos no período (${todos.length}) · ${concl} com procedimento finalizado</h3>${todos.length ? todos.map(a=>visitaHTML(a,{comPaciente:true})).join("") : `<div class="empty">Sem atendimentos no período.</div>`}</div>
+    </div>`;
+  }
+  return `<section class="panel"><div class="panel-h"><div class="row"><span style="font-weight:700;font-size:13px">Período</span>${presets.map(([k,n,i,f])=>`<button class="btn sm" type="button" data-prod="${i||""}|${f||""}" ${S.prodIni===(i||"")&&S.prodFim===(f||"")?'style="border-color:var(--accent);color:var(--accent)"':""}>${n}</button>`).join("")}</div>
+    <div class="row"><input type="date" id="prod-ini" value="${esc(S.prodIni)}" style="width:auto" aria-label="De"><span>até</span><input type="date" id="prod-fim" value="${esc(S.prodFim)}" style="width:auto" aria-label="Até"></div></div></section>
+  <div class="split">
+    <section class="panel"><div class="panel-h"><input type="search" id="prod-busca" placeholder="Buscar aluno por nome ou matrícula" value="${esc(S.prodBusca)}" aria-label="Buscar aluno"></div>
+      <div class="list">${als.length ? als.map(y=>`<div class="li" role="button" tabindex="0" data-asel="${esc(y.m.matricula)}" aria-selected="${y.m.matricula===S.progAluno}"><div class="l"><b>${esc(y.m.nome)}</b><span class="s">${esc(y.m.matricula)}${y.m.temporario?" · temporário":""} · ${y.procs} procedimento(s)</span></div><span class="pill e-clinica" title="Atendimentos como operador">${y.op.length}</span></div>`).join("") : `<div class="empty">Nenhum aluno encontrado.</div>`}</div></section>
+    <section class="panel">${det}</section>
+  </div>`;
+}
+function vProgresso(){
+  const seg = `<div class="seg" role="group"><button type="button" data-prog="paciente" aria-pressed="${S.progMode==="paciente"}">Por paciente</button><button type="button" data-prog="aluno" aria-pressed="${S.progMode==="aluno"}">Por aluno</button><button type="button" data-prog="todos" aria-pressed="${S.progMode==="todos"}">Todos os registros</button></div>`;
+  const head = (p) => `<div class="head"><div><h1>Progresso</h1><p>${p}</p></div>${seg}</div>`;
+  if (S.progMode === "aluno") return head("Produção de cada aluno: atendimentos, pacientes e procedimentos no período.") + vProducao();
+  if (S.progMode === "todos") {
+    let ev = [];
+    for (const a of S.atend) for (const e of (a.eventos||[])) if (!S.logDia || keyBR(new Date(e.ts)) === S.logDia) ev.push({a, e});
+    ev.sort((x,y)=>y.e.ts.localeCompare(x.e.ts));
+    const total = ev.length; ev = ev.slice(0, 400);
+    return head("Histórico completo de check-ins e registros, do mais recente ao mais antigo.") + `
+    <section class="panel"><div class="panel-h"><div class="row"><label for="log-dia" style="font-weight:700;font-size:13px">Dia</label><input type="date" id="log-dia" value="${esc(S.logDia)}" style="width:auto">${S.logDia?`<button class="btn sm" type="button" data-logclear>Ver todos os dias</button>`:""}</div><span style="color:var(--muted);font-size:13px">${total} registro(s)${total>400?" · mostrando os 400 mais recentes":""}</span></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Data e hora (Brasília)</th><th>Paciente</th><th>Etapa</th><th>Registrado por</th><th>Detalhe</th></tr></thead><tbody>
+      ${ev.length ? ev.map(({a,e})=>`<tr class="click" data-openpac="${esc(a.pacienteId)}"><td class="mono" style="white-space:nowrap">${esc(dataHoraBR(e.ts))}</td><td><b>${esc(paciente(a.pacienteId)?.nome||"—")}</b></td><td><span class="pill e-${e.etapa}">${esc(ETAPAS[e.etapa]?.nome||e.etapa)}</span></td><td>${esc(nomeM(e.por))}</td><td style="max-width:360px;color:var(--muted)">${esc(e.etapa==="procedimento" ? (a.procedimentos||[]).join(", ") : e.etapa==="clinica" ? "Aluno(a): "+alunosTxt(a) : (e.nota||""))}</td></tr>`).join("")
+        : `<tr><td colspan="5"><div class="empty">Nenhum registro${S.logDia?" neste dia":""}.</div></td></tr>`}</tbody></table></div></section>`;
+  }
+  const q = norm(S.progBusca);
+  const lista = S.pacientes.map(p => ({p, st:statusPac(p), n:S.atend.filter(a=>a.pacienteId===p.id).length}))
+    .filter(x => (!q || norm(x.p.nome).includes(q) || String(x.p.prontuario||"").includes(S.progBusca.trim()))
+      && (S.progFiltro==="todos" || (S.progFiltro==="agora" && !["novo","alta","provisoria"].includes(x.st.k)) || (S.progFiltro==="trat" && x.st.k==="provisoria") || (S.progFiltro==="alta" && x.st.k==="alta")))
+    .sort((a,b)=>porNome(a.p,b.p));
+  const p = paciente(S.progSel);
+  let det = `<div class="empty" style="padding:40px 10px">Selecione um paciente para ver todo o percurso de atendimento.</div>`;
+  if (p) {
+    const vs = S.atend.filter(a=>a.pacienteId===p.id).sort((a,b)=>(b.criadoEm||"").localeCompare(a.criadoEm||""));
+    const st = statusPac(p);
+    const procs = vs.reduce((n,a)=>n+(a.procedimentos?.length||0),0);
+    const quem = new Set(vs.flatMap(equipe));
+    det = `<div class="panel-b stack">
+      <div class="ph"><div><h2>${esc(p.nome)}</h2><span style="color:var(--muted)">Prontuário ${esc(p.prontuario||"—")} · ${idade(p.nascimento) ?? "—"} anos</span></div><span class="pill ${st.k==="novo"?"":"e-"+st.k}">${esc(st.t)}</span></div>
+      ${p.alergias ? `<div class="alert">Alergias / condições: ${esc(p.alergias)}</div>` : ""}
+      <dl class="facts"><div><dt>Atendimentos</dt><dd>${vs.length}</dd></div><div><dt>Procedimentos</dt><dd>${procs}</dd></div><div><dt>Alunos que atenderam</dt><dd>${quem.size}</dd></div><div><dt>Primeira visita</dt><dd>${vs.length?esc(kShort(vs[vs.length-1].dataBR)):"—"}</dd></div></dl>
+      ${vs.length ? vs.map(a=>visitaHTML(a)).join("") : `<div class="empty">Este paciente ainda não passou pelo check-in.</div>`}
+    </div>`;
+  }
+  return head("Histórico de check-ins e registros de cada paciente.") + `
+  <div class="split">
+    <section class="panel"><div class="panel-h" style="flex-direction:column;align-items:stretch">
+      <input type="search" id="prog-busca" placeholder="Buscar por nome ou prontuário" value="${esc(S.progBusca)}" aria-label="Buscar paciente">
+      <div class="seg" role="group">${[["todos","Todos"],["agora","Na clínica agora"],["trat","Em tratamento"],["alta","Alta"]].map(([k,n])=>`<button type="button" data-pf="${k}" aria-pressed="${S.progFiltro===k}">${n}</button>`).join("")}</div></div>
+      <div class="list">${lista.length ? lista.map(x=>`<div class="li" role="button" tabindex="0" data-psel="${x.p.id}" aria-selected="${x.p.id===S.progSel}"><div class="l"><b>${esc(x.p.nome)}</b><span class="s">Pront. ${esc(x.p.prontuario||"—")} · ${x.n} atendimento(s)</span></div><span class="pill ${x.st.k==="novo"?"":"e-"+x.st.k}">${esc(x.st.k==="novo"?"Novo":x.st.k==="alta"?"Alta":x.st.k==="provisoria"?"Em tratamento":ETAPAS[x.st.k].curto)}</span></div>`).join("")
+        : `<div class="empty">${S.pacientes.length?"Nenhum paciente neste filtro.":"Nenhum paciente cadastrado."}</div>`}</div></section>
+    <section class="panel">${det}</section>
+  </div>`;
+}
+
+/* ----- aba Métricas ----- */
+function semestresLista(y = +S.ref.slice(0,4)){
+  if (S.semestres?.length) return S.semestres;
+  return [y-1,y,y+1].flatMap(a => [{nome:a+".1", inicio:a+"-01-01", fim:a+"-06-30"},{nome:a+".2", inicio:a+"-07-01", fim:a+"-12-31"}]);
+}
+function periodo(){
+  const k = S.ref, [y,m] = k.split("-").map(Number);
+  if (S.per === "dia") return {ini:k, fim:k, rot:kDate(k,{weekday:"long",day:"numeric",month:"long",year:"numeric"}), g:"hora"};
+  if (S.per === "semana") { const dow = (kParse(k).getUTCDay()+6)%7, ini = kAdd(k,-dow), fim = kAdd(ini,6); return {ini, fim, rot:`Semana de ${kShort(ini).slice(0,5)} a ${kShort(fim)}`, g:"dia"}; }
+  if (S.per === "mes") { const ini = `${y}-${String(m).padStart(2,"0")}-01`, fim = kAdd(kFmt(new Date(Date.UTC(y, m, 1, 12))), -1); return {ini, fim, rot:kDate(k,{month:"long",year:"numeric"}), g:"dia"}; }
+  if (S.per === "semestre") { const s = semestresLista().find(s => k >= s.inicio && k <= s.fim) || {nome:"fora do calendário", inicio:k, fim:k}; return {ini:s.inicio, fim:s.fim, rot:`Semestre letivo ${s.nome} (${kShort(s.inicio)} a ${kShort(s.fim)})`, g:"mes"}; }
+  return {ini:`${y}-01-01`, fim:`${y}-12-31`, rot:`Ano de ${y}`, g:"mes"};
+}
+function mover(dir){
+  const k = S.ref, [y,m] = k.split("-").map(Number);
+  if (S.per === "dia") S.ref = kAdd(k, dir);
+  else if (S.per === "semana") S.ref = kAdd(k, 7*dir);
+  else if (S.per === "mes") S.ref = kFmt(new Date(Date.UTC(y, m-1+dir, 1, 12)));
+  else if (S.per === "ano") S.ref = `${y+dir}-01-01`;
+  else { const l = [...semestresLista()].sort((a,b)=>a.inicio.localeCompare(b.inicio)); const p = periodo(); const i = l.findIndex(s=>s.inicio===p.ini); const n = l[i+dir]; S.ref = n ? n.inicio : kAdd(dir>0 ? p.fim : p.ini, dir); }
+  render();
+}
+function colChart(bins){
+  const W = 640, H = 230, pl = 34, pr = 8, pt = 12, pb = 28;
+  const max = Math.max(1, ...bins.map(b=>b.v));
+  const step = max <= 5 ? 1 : max <= 10 ? 2 : max <= 25 ? 5 : max <= 50 ? 10 : Math.ceil(max/50)*10;
+  const top = Math.ceil(max/step)*step;
+  const y = (v) => pt + (H-pt-pb) * (1 - v/top);
+  const bw = (W-pl-pr)/bins.length, w = Math.max(2, Math.min(28, bw*0.62));
+  const every = Math.ceil(bins.length / 12);
+  let g = "";
+  for (let v = 0; v <= top; v += step) g += `<line class="gl" x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}"/><text x="${pl-6}" y="${y(v)+4}" text-anchor="end">${v}</text>`;
+  bins.forEach((b,i) => {
+    const cx = pl + bw*i + bw/2, h = y(0)-y(b.v), x = cx - w/2;
+    if (b.v > 0) { const r = Math.min(4, w/2, h); g += `<g data-tip="${esc(b.tip)}: ${b.v} check-in(s)"><rect class="hit" x="${pl+bw*i}" y="${pt}" width="${bw}" height="${H-pt-pb}"/><path class="bar" d="M${x},${y(0)} V${y(b.v)+r} Q${x},${y(b.v)} ${x+r},${y(b.v)} H${x+w-r} Q${x+w},${y(b.v)} ${x+w},${y(b.v)+r} V${y(0)} Z"/></g>`; }
+    else g += `<g data-tip="${esc(b.tip)}: nenhum check-in"><rect class="hit" x="${pl+bw*i}" y="${pt}" width="${bw}" height="${H-pt-pb}"/></g>`;
+    if (i % every === 0) g += `<text x="${cx}" y="${H-9}" text-anchor="middle">${esc(b.l)}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Check-ins no período">${g}</svg>`;
+}
+function vMetricas(){
+  const P = periodo();
+  const list = S.atend.filter(a => a.dataBR >= P.ini && a.dataBR <= P.fim);
+  const comProc = list.filter(a => ts(a,"procedimento"));
+  const pacAt = new Set(comProc.map(a=>a.pacienteId)).size;
+  const esp = list.filter(a => ts(a,"clinica")).map(a => mins(ts(a,"recepcao"), ts(a,"clinica")));
+  const espM = esp.length ? esp.reduce((x,y)=>x+y,0)/esp.length : null;
+  const espMax = esp.length ? Math.max(...esp) : null;
+  const cl = comProc.filter(a=>ts(a,"clinica")).map(a => mins(ts(a,"clinica"), ts(a,"procedimento")));
+  const clM = cl.length ? cl.reduce((x,y)=>x+y,0)/cl.length : null;
+  const altas = list.filter(a=>a.etapa==="alta").length, prov = list.filter(a=>a.etapa==="provisoria").length;
+  const procC = {}; comProc.forEach(a => (a.procedimentos||[]).forEach(x => procC[x] = (procC[x]||0)+1));
+  const top = Object.entries(procC).sort((a,b)=>b[1]-a[1]);
+  const totProc = top.reduce((n,x)=>n+x[1],0);
+  const porAluno = {}; comProc.forEach(a => { const k = a.alunoMatricula||"—"; porAluno[k] = porAluno[k] || {n:0, pac:new Set(), proc:0}; porAluno[k].n++; porAluno[k].pac.add(a.pacienteId); porAluno[k].proc += a.procedimentos?.length||0; });
+  let bins = [];
+  if (P.g === "hora") { for (let h = 7; h <= 21; h++) bins.push({l:h+"h", tip:`${h}h–${h+1}h`, v:list.filter(a => +fHoraNum.format(new Date(ts(a,"recepcao"))) === h).length}); }
+  else if (P.g === "dia") { for (let k = P.ini; k <= P.fim; k = kAdd(k,1)) bins.push({l: S.per==="semana" ? kDate(k,{weekday:"short"}).replace(".","") : String(+k.slice(8)), tip:kDate(k,{weekday:"short",day:"2-digit",month:"2-digit"}), v:list.filter(a=>a.dataBR===k).length}); }
+  else { let k = P.ini.slice(0,7)+"-01"; while (k <= P.fim) { const mk = k.slice(0,7); bins.push({l:kDate(k,{month:"short"}).replace(".",""), tip:kDate(k,{month:"long",year:"numeric"}), v:list.filter(a=>a.dataBR.slice(0,7)===mk).length}); const [yy,mm] = k.split("-").map(Number); k = kFmt(new Date(Date.UTC(yy, mm, 1, 12))); } }
+  const segP = `<div class="seg" role="group">${[["dia","Dia"],["semana","Semana"],["mes","Mês"],["semestre","Semestre letivo"],["ano","Ano"]].map(([k,n])=>`<button type="button" data-per="${k}" aria-pressed="${S.per===k}">${n}</button>`).join("")}</div>`;
+  const maxP = top.length ? top[0][1] : 1;
+  return `<div class="head"><div><h1>Métricas</h1><p>Visível apenas para professores, responsável técnico e recepção.</p></div>${segP}</div>
+  <div class="row" style="justify-content:space-between">
+    <div class="row"><button class="btn sm" type="button" data-mv="-1" aria-label="Período anterior">‹</button><button class="btn sm" type="button" data-mv="1" aria-label="Próximo período">›</button><input type="date" id="ref" value="${S.ref}" style="width:auto" aria-label="Data de referência"><b style="font-family:var(--f-display);font-size:16px">${esc(P.rot.charAt(0).toUpperCase()+P.rot.slice(1))}</b></div>
+    ${S.per==="semestre" ? `<button class="btn sm" type="button" data-act="semestres">Configurar semestres letivos</button>` : ""}
+  </div>
+  <div class="kpis">
+    <div class="kpi hl"><span>Pacientes atendidos</span><b>${pacAt}</b><small>com procedimento finalizado</small></div>
+    <div class="kpi"><span>Check-ins</span><b>${list.length}</b><small>${comProc.length} atendimento(s) concluído(s)</small></div>
+    <div class="kpi hl"><span>Espera média</span><b>${durTxt(espM)}</b><small>recepção → clínica${espMax!=null?` · máx. ${durTxt(espMax)}`:""}</small></div>
+    <div class="kpi"><span>Tempo em clínica</span><b>${durTxt(clM)}</b><small>entrada → procedimento</small></div>
+    <div class="kpi"><span>Altas</span><b>${altas}</b><small>tratamentos concluídos</small></div>
+    <div class="kpi"><span>Liberações provisórias</span><b>${prov}</b><small>pacientes que retornam</small></div>
+  </div>
+  <div class="mgrid">
+    <section class="panel"><div class="panel-h"><h2>Check-ins por ${P.g==="hora"?"hora de chegada":P.g==="dia"?"dia":"mês"}</h2></div><div class="panel-b chart">${list.length ? colChart(bins) : `<div class="empty">Nenhum check-in neste período.</div>`}</div></section>
+    <section class="panel"><div class="panel-h"><h2>Procedimentos mais realizados</h2><span style="color:var(--muted);font-size:13px">${totProc} no total</span></div><div class="panel-b">
+      ${top.length ? top.slice(0,10).map(([n,v])=>`<div class="hb" data-tip="${esc(n)}: ${v} (${Math.round(v/totProc*100)}%)"><span class="lbl" title="${esc(n)}">${esc(n)}</span><div class="trk"><div class="fill" style="width:${v/maxP*100}%"></div></div><span class="v">${v}</span></div>`).join("") : `<div class="empty">Nenhum procedimento registrado neste período.</div>`}
+    </div></section>
+  </div>
+  <section class="panel"><div class="panel-h"><h2>Atendimentos por aluno (operador)</h2></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Aluno(a)</th><th>Matrícula</th><th style="text-align:right">Atendimentos</th><th style="text-align:right">Pacientes</th><th style="text-align:right">Procedimentos</th></tr></thead><tbody>
+    ${Object.keys(porAluno).length ? Object.entries(porAluno).sort((a,b)=>b[1].n-a[1].n).map(([mat,v])=>`<tr class="click" data-prodaluno="${esc(mat)}"><td><b>${esc(nomeM(mat))}</b></td><td class="mono">${esc(mat)}</td><td class="num">${v.n}</td><td class="num">${v.pac.size}</td><td class="num">${v.proc}</td></tr>`).join("") : `<tr><td colspan="5"><div class="empty">Sem atendimentos concluídos no período.</div></td></tr>`}
+    </tbody></table></div></section>`;
+}
+
+/* ===== diálogos ===== */
+const dlg = $("#dlg"), form = $("#dlg-form");
+let onOk = null, onDel = null;
+function open(title, body, opts = {}){
+  form.innerHTML = `<div class="dlg-h"><h2>${esc(title)}</h2><button class="btn sm ghost" type="button" data-close aria-label="Fechar">✕</button></div>
+    <div class="dlg-b">${body}</div>
+    <div class="dlg-f">${opts.del ? `<button class="btn danger" type="button" data-del>${esc(opts.delTxt||"Excluir")}</button>` : "<span></span>"}<div class="row"><button class="btn" type="button" data-close>${opts.ok===false?"Fechar":"Cancelar"}</button>${opts.ok===false?"":`<button class="btn primary" type="submit">${esc(opts.ok||"Salvar")}</button>`}</div></div>`;
+  onOk = opts.onOk || null; onDel = opts.onDel || null;
+  if (!dlg.open) dlg.showModal();
+  const f = form.querySelector("input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([readonly]),select,textarea"); if (f && opts.focus !== false) setTimeout(()=>f.focus(), 30);
+}
+const F = (id, label, input, cls = "", hint = "") => `<div class="f ${cls}"><label for="${id}">${label}</label>${input}${hint?`<span class="hint">${hint}</span>`:""}<span class="err" id="${id}-err"></span></div>`;
+const v = (id) => form.querySelector("#"+id)?.value.trim() ?? "";
+const err = (id, m) => { const e = form.querySelector("#"+id+"-err"); if (e) e.textContent = m || ""; return !m; };
+const opt = (list, cur, blank) => (blank ? `<option value="">${blank}</option>` : "") + list.map(m => `<option value="${esc(m.matricula)}" ${m.matricula===cur?"selected":""}>${esc(m.nome)} · ${esc(m.matricula)}</option>`).join("");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault(); if (!onOk) return;
+  const b = form.querySelector("[type=submit]"); b.disabled = true;
+  const ok = await onOk(); b.disabled = false;
+  if (ok) dlg.close();
+});
+form.addEventListener("click", async (e) => {
+  if (e.target.closest("[data-close]")) return dlg.close();
+  const d = e.target.closest("[data-del]");
+  if (d) { if (!d.classList.contains("armed")) { d.classList.add("armed"); d.textContent = "Clique de novo para confirmar"; return; } if (onDel && await onDel() !== false) dlg.close(); }
+  const r = e.target.closest("[data-pick]");
+  if (r) { form.querySelector("#ci-pac").value = r.dataset.pick; form.querySelectorAll("[data-pick]").forEach(x=>x.setAttribute("aria-pressed", x===r)); err("ci-pac"); }
+});
+form.addEventListener("input", (e) => {
+  const t = e.target;
+  if (t.dataset.mask === "cpf") t.value = maskCPF(t.value);
+  if (t.dataset.mask === "tel") t.value = maskTel(t.value);
+  if (t.id === "ci-busca") {
+    const q = norm(t.value); const box = form.querySelector("#ci-res");
+    const l = S.pacientes.filter(p => !q || norm(p.nome).includes(q) || String(p.prontuario||"").includes(t.value.trim())).sort(porNome).slice(0,30);
+    box.innerHTML = resultados(l, form.querySelector("#ci-pac").value);
+  }
+});
+const resultados = (l, sel) => l.length ? l.map(p => { const aberto = S.atend.some(a=>a.pacienteId===p.id && !fechado(a)); return `<button type="button" data-pick="${p.id}" aria-pressed="${p.id===sel}" ${aberto?"disabled style=\"opacity:.5\"":""}><span><b>${esc(p.nome)}</b> <span class="mono" style="color:var(--muted)">#${esc(p.prontuario||"—")}</span></span><span style="color:var(--muted);font-size:12.5px">${aberto?"já em atendimento":statusPac(p).t}</span></button>`; }).join("") : `<div class="empty" style="padding:12px">Nenhum paciente encontrado.</div>`;
+
+async function identificar(raw){
+  const mat = matKey(raw);
+  if (!mat) return "Digite sua matrícula ou código temporário.";
+  const m = membro(mat);
+  if (!m) return "Matrícula ou código não encontrado. Procure a recepção para fazer seu cadastro.";
+  if (m.ativo === false) return "Este cadastro está inativo. Procure a recepção.";
+  if (vencido(m)) return `Este código temporário venceu em ${kShort(m.validade)}. Procure a recepção.`;
+  try { if (await B.claimedByOther(mat)) return "Esta matrícula já está vinculada a outra conta. Peça à recepção para liberar o vínculo."; } catch {}
+  const ok = await save(()=>B.link(mat), `Olá, ${m.nome.split(" ")[0]}!`);
+  return ok ? null : "Não foi possível entrar. Tente de novo.";
+}
+function dlgIdentificar(){
+  open("Identificação do usuário", `
+    ${F("id-mat","Matrícula institucional ou código temporário",`<input type="text" id="id-mat" value="${esc(S.meMat||"")}" autocomplete="off" placeholder="Ex.: 20231045 ou TMP-4821">`,"full","Seus registros ficam assinados com o nome ligado a esta matrícula.")}
+  `, {ok:"Entrar", del:!!S.meMat, delTxt:"Sair", onDel: async () => save(()=>B.link(null), "Você saiu"), onOk: async () => { const e = await identificar(v("id-mat")); return err("id-mat", e); }});
+}
+function gerarCodigo(){ let c; do { c = "TMP-" + String(Math.floor(1000 + Math.random()*9000)); } while (membro(c)); return c; }
+function dlgTemp(){
+  open("Código de acesso temporário", `
+    <p class="f full" style="margin:0;color:var(--muted);font-size:13px">Para aluno que ainda não tem matrícula institucional. O código funciona como matrícula até a data de validade e pode ser convertido depois, mantendo todo o histórico.</p>
+    ${F("t-nome","Nome completo do aluno *",`<input type="text" id="t-nome" autocomplete="off">`,"full")}
+    ${F("t-per","Período / turma",`<input type="text" id="t-per" placeholder="Ex.: 5º período">`)}
+    ${F("t-val","Válido até *",`<input type="date" id="t-val" min="${keyBR()}" value="${kAdd(keyBR(),30)}">`)}
+  `, {ok:"Gerar código", onOk: async () => {
+    const nome = v("t-nome").replace(/\s+/g," ");
+    let ok = err("t-nome", nome.split(" ").length < 2 ? "Informe o nome completo." : "");
+    ok = err("t-val", !v("t-val") ? "Informe a validade." : "") && ok;
+    if (!ok) return false;
+    const code = gerarCodigo();
+    const r = await save(()=>B.set("membros", code, {matricula:code, nome, tipo:"aluno", periodo:v("t-per"), ativo:true, temporario:true, validade:v("t-val"), criadoEm:new Date().toISOString(), criadoPor:S.meMat||""}));
+    if (r) setTimeout(() => open("Código gerado", `<div class="f full" style="text-align:center;gap:10px"><span class="hint">Entregue este código a ${esc(nome)}</span><div class="code-big">${esc(code)}</div><span class="hint">Válido até ${esc(kShort(v("t-val")) || "")}. O aluno digita o código no lugar da matrícula.</span><button class="btn sm" type="button" id="copy-code" style="align-self:center">Copiar código</button></div>`, {ok:false, focus:false}), 30);
+    setTimeout(() => { const b = $("#copy-code"); if (b) b.onclick = async () => { try { await navigator.clipboard.writeText(code); toast("Código copiado"); } catch { toast("Selecione o código e copie manualmente."); } }; }, 80);
+    return r;
+  }});
+}
+async function converter(m, nova){
+  const d = {...strip(m), matricula:nova, temporario:false, validade:"", convertidoDe:m.matricula};
+  await B.set("membros", nova, d);
+  const troca = (x) => x === m.matricula ? nova : x;
+  for (const a of S.atend.filter(a => equipe(a).includes(m.matricula) || (a.eventos||[]).some(e=>e.por===m.matricula))) {
+    await B.patch("atendimentos", a.id, {alunoMatricula:troca(a.alunoMatricula||""), auxiliarMatricula:troca(a.auxiliarMatricula||""), circulanteMatricula:troca(a.circulanteMatricula||""), eventos:(a.eventos||[]).map(e=>({...e, por:troca(e.por)}))});
+  }
+  await B.relink(m.matricula, nova);
+  await B.del("membros", m.matricula);
+}
+function dlgMembro(m, grupo){
+  m = m || {};
+  const edit = !!m.matricula;
+  grupo = grupo || (m.tipo === "aluno" ? "aluno" : "colab");
+  const tipos = Object.entries(FUNCOES).filter(([k]) => grupo === "aluno" ? k === "aluno" : k !== "aluno");
+  const tipoAtual = m.tipo || (grupo === "aluno" ? "aluno" : "recepcao");
+  open(edit ? (m.temporario ? "Acesso temporário" : grupo === "aluno" ? "Editar aluno" : "Editar colaborador") : grupo === "aluno" ? "Cadastrar aluno" : "Cadastrar colaborador", `
+    ${F("m-mat", m.temporario ? "Código temporário" : "Matrícula institucional *",`<input type="text" id="m-mat" value="${esc(m.matricula||"")}" ${edit?"readonly":""} autocomplete="off">`, grupo === "aluno" ? "full" : "", edit ? "Não pode ser alterada." : "Letras, números, ponto e hífen.")}
+    ${grupo === "aluno" ? `<input type="hidden" id="m-tipo" value="aluno">` : F("m-tipo","Função *",`<select id="m-tipo">${tipos.map(([k,n])=>`<option value="${k}" ${k===tipoAtual?"selected":""}>${n}${ADMINS.includes(k)?" (administrador)":""}</option>`).join("")}</select>`)}
+    ${F("m-nome","Nome completo *",`<input type="text" id="m-nome" value="${esc(m.nome||"")}" autocomplete="off">`,"full")}
+    ${F("m-per", grupo === "aluno" ? "Período / turma" : "Setor", `<input type="text" id="m-per" value="${esc(m.periodo||"")}" placeholder="${grupo === "aluno" ? "Ex.: 7º período, Clínica Integrada II" : "Ex.: Recepção central, Clínica Integrada"}">`, m.temporario ? "" : "full")}
+    ${m.temporario ? F("m-val","Válido até",`<input type="date" id="m-val" value="${esc(m.validade||"")}">`) : ""}
+    <div class="f full"><label style="display:flex;gap:8px;align-items:center;font-weight:600;color:var(--fg);font-size:13.5px"><input type="checkbox" id="m-ativo" ${m.ativo===false?"":"checked"}> Cadastro ativo</label></div>
+    ${m.temporario ? `<div class="f full box"><label for="m-nova">Converter para matrícula definitiva</label><div class="row" style="flex-wrap:nowrap"><input type="text" id="m-nova" placeholder="Matrícula institucional" autocomplete="off"><button class="btn" type="button" id="m-conv">Converter</button></div><span class="hint">Todo o histórico de atendimentos passa para a nova matrícula.</span><span class="err" id="m-nova-err"></span></div>` : ""}
+    ${edit ? `<div class="f full"><button class="btn sm" type="button" id="m-unlink" style="align-self:flex-start">Liberar vínculo de conta</button><span class="hint">Use quando a pessoa trocar de conta ou não conseguir entrar porque a matrícula já está vinculada.</span></div>` : ""}
+  `, {del:edit, onDel: async () => {
+      if (S.atend.some(a=>equipe(a).includes(m.matricula)||a.professorMatricula===m.matricula)) { toast("Há atendimentos ligados a esta matrícula. Marque o cadastro como inativo em vez de excluir."); return false; }
+      return save(async()=>{ await B.unlinkMat(m.matricula); await B.del("membros", m.matricula); }, "Cadastro excluído"); },
+    onOk: async () => {
+      const mat = matKey(v("m-mat")), nome = v("m-nome").replace(/\s+/g," ");
+      let ok = err("m-mat", !mat ? "Informe a matrícula." : (!edit && membro(mat)) ? `Esta matrícula já pertence a ${membro(mat).nome}.` : "");
+      ok = err("m-nome", nome.split(" ").length < 2 ? "Informe o nome completo (nome e sobrenome)." : "") && ok;
+      if (!ok) return false;
+      const d = {...strip(m), matricula:mat, nome, tipo: m.temporario ? "aluno" : v("m-tipo"), periodo:v("m-per"), ativo:form.querySelector("#m-ativo").checked, criadoEm:m.criadoEm||new Date().toISOString()};
+      if (m.temporario) d.validade = v("m-val");
+      return save(()=>B.set("membros", mat, d), edit ? "Cadastro atualizado" : "Cadastro realizado");
+    }});
+  const cv = form.querySelector("#m-conv");
+  if (cv) cv.onclick = async () => {
+    const nova = matKey(v("m-nova"));
+    if (!err("m-nova", !nova ? "Digite a matrícula definitiva." : membro(nova) ? `Esta matrícula já pertence a ${membro(nova).nome}.` : nova.startsWith("TMP-") ? "Use a matrícula institucional." : "")) return;
+    cv.disabled = true;
+    if (await save(()=>converter(m, nova), `Convertido para a matrícula ${nova}`)) dlg.close(); else cv.disabled = false;
+  };
+  const ul = form.querySelector("#m-unlink");
+  if (ul) ul.onclick = async () => { if (await save(()=>B.unlinkMat(m.matricula), "Vínculo liberado. A pessoa pode entrar de novo com a matrícula.")) dlg.close(); };
+}
+function proxPront(){ const n = Math.max(0, ...S.pacientes.map(p=>parseInt(p.prontuario,10)||0)); return String(n+1).padStart(4,"0"); }
+function dlgPaciente(p, then){
+  p = p || {};
+  const pode = isRecep() && S.canWrite;
+  open(p.id ? (pode ? "Dados do paciente" : "Ficha do paciente") : "Cadastrar paciente", `
+    ${F("p-nome","Nome completo *",`<input type="text" id="p-nome" value="${esc(p.nome||"")}" autocomplete="off">`,"full")}
+    ${F("p-pront","Nº do prontuário *",`<input type="text" id="p-pront" value="${esc(p.prontuario||proxPront())}">`)}
+    ${F("p-nasc","Data de nascimento",`<input type="date" id="p-nasc" value="${esc(p.nascimento||"")}" max="${keyBR()}">`)}
+    ${F("p-cpf","CPF",`<input type="text" id="p-cpf" inputmode="numeric" data-mask="cpf" value="${esc(p.cpf||"")}" placeholder="000.000.000-00">`)}
+    ${F("p-tel","Telefone",`<input type="tel" id="p-tel" data-mask="tel" value="${esc(p.telefone||"")}" placeholder="(00) 00000-0000">`)}
+    ${F("p-alerg","Alergias e condições sistêmicas",`<input type="text" id="p-alerg" value="${esc(p.alergias||"")}" placeholder="Ex.: alergia a látex, anticoagulante, diabetes">`,"full","Aparece em destaque para o aluno no check-in.")}
+    ${F("p-obs","Observações",`<textarea id="p-obs">${esc(p.obs||"")}</textarea>`,"full")}
+  `, {del:!!p.id && pode, ok: pode ? "Salvar" : false, onDel: async () => {
+      if (S.atend.some(a=>a.pacienteId===p.id)) { toast("Este paciente já tem histórico de atendimento e não pode ser excluído."); return false; }
+      return save(()=>B.del("pacientes", p.id), "Paciente excluído"); },
+    onOk: async () => {
+      const d = {nome:v("p-nome").replace(/\s+/g," "), prontuario:v("p-pront"), nascimento:v("p-nasc"), cpf:v("p-cpf"), telefone:v("p-tel"), alergias:v("p-alerg"), obs:v("p-obs")};
+      let ok = err("p-nome", d.nome.split(" ").length < 2 ? "Informe o nome completo." : "");
+      ok = err("p-pront", !d.prontuario ? "Informe o prontuário." : S.pacientes.some(x=>x.id!==p.id && x.prontuario===d.prontuario) ? "Este número de prontuário já está em uso." : "") && ok;
+      ok = err("p-cpf", d.cpf && !cpfOk(d.cpf) ? "CPF inválido." : d.cpf && S.pacientes.some(x=>x.id!==p.id && digits(x.cpf)===digits(d.cpf)) ? "Já existe paciente com este CPF." : "") && ok;
+      if (!ok) return false;
+      if (p.id) { const base = strip(p); delete base.alunoMatricula; return save(()=>B.set("pacientes", p.id, {...base, ...d}), "Paciente atualizado"); }
+      let nid; const r = await save(async()=>{ nid = await B.add("pacientes", {...d, criadoEm:new Date().toISOString(), criadoPor:S.meMat||""}); }, "Paciente cadastrado");
+      if (r && then) setTimeout(()=>then(nid), 50);
+      return r;
+    }});
+  if (!pode) form.querySelectorAll(".dlg-b input,.dlg-b textarea").forEach(x => x.readOnly = true);
+}
+function dlgCheckin(preId){
+  if (!isRecep()) return toast("Somente a recepção registra o check-in.");
+  if (!S.pacientes.length) { toast("Cadastre o paciente primeiro."); return dlgPaciente(null, dlgCheckin); }
+  const l = [...S.pacientes].sort(porNome).slice(0,30);
+  open("Check-in na recepção", `
+    <div class="f full"><label for="ci-busca">Paciente *</label><input type="search" id="ci-busca" placeholder="Buscar por nome ou prontuário" autocomplete="off"><input type="hidden" id="ci-pac" value="${esc(preId||"")}">
+      <div class="results" id="ci-res">${resultados(l, preId)}</div><span class="err" id="ci-pac-err"></span>
+      <button class="btn sm" type="button" data-newpac style="align-self:flex-start;margin-top:4px">+ Paciente novo</button></div>
+    ${F("ci-nota","Observação da recepção",`<input type="text" id="ci-nota" placeholder="Ex.: queixa de dor, acompanhante, retorno agendado">`,"full")}
+    <p class="f full" style="margin:0;color:var(--muted);font-size:12.5px">O aluno que vai atender é definido na entrada da clínica. O horário de chegada é registrado no horário de Brasília ao confirmar.</p>
+  `, {ok:"Registrar chegada", onOk: async () => {
+      const pid = v("ci-pac");
+      if (!err("ci-pac", !pid ? "Escolha o paciente na lista." : S.atend.some(a=>a.pacienteId===pid && !fechado(a)) ? "Este paciente já está em atendimento." : "")) return false;
+      const now = new Date();
+      return save(()=>B.add("atendimentos", {pacienteId:pid, alunoMatricula:"", auxiliarMatricula:"", circulanteMatricula:"", dataBR:keyBR(now), etapa:"recepcao", eventos:[{etapa:"recepcao", ts:now.toISOString(), por:S.meMat||"", nota:v("ci-nota")}], procedimentos:[], descricao:"", dentes:"", professorMatricula:"", retornoPrevisto:"", criadoEm:now.toISOString()}), `Check-in registrado às ${horaBR(now.toISOString())}`);
+    }});
+  form.querySelector("[data-newpac]").onclick = () => { dlg.close(); dlgPaciente(null, (id)=>dlgCheckin(id)); };
+}
+async function avancar(a, etapa, extra = {}, nota = ""){
+  const now = new Date().toISOString();
+  const eventos = [...(a.eventos||[]), {etapa, ts:now, por:S.meMat||"", nota}];
+  return save(()=>B.patch("atendimentos", a.id, {etapa, eventos, ...extra}), `${ETAPAS[etapa].nome} às ${horaBR(now)}`);
+}
+function equipeCampos(a){
+  const sou = isAluno() ? S.meMat : "";
+  const op = a.alunoMatricula || sou;
+  return `
+    ${F("en-op","Aluno(a) operador(a) *",`<select id="en-op">${opt(alunos(), op, "Selecione")}</select>`)}
+    ${F("en-aux","Aluno(a) auxiliar",`<select id="en-aux">${opt(alunos(), a.auxiliarMatricula||"", "Sem auxiliar")}</select>`)}
+    ${F("en-circ","Aluno(a) circulante",`<select id="en-circ">${opt(alunos(), a.circulanteMatricula||"", "Sem circulante")}</select>`)}
+    <p class="f full hint" style="margin:0">Só o operador é obrigatório. Preencha auxiliar e circulante conforme a equipe do dia: trio, dupla ou atendimento solo.</p>
+    <span class="err f full" id="en-eq-err"></span>`;
+}
+function lerEquipe(){
+  const op = v("en-op"), aux = v("en-aux"), circ = v("en-circ");
+  const lista = [op, aux, circ].filter(Boolean);
+  let ok = err("en-op", !op ? "Escolha o aluno operador." : "");
+  ok = err("en-eq", new Set(lista).size !== lista.length ? "Cada aluno só pode ocupar uma função no atendimento." : (isAluno() && !isAdmin() && !lista.includes(S.meMat)) ? "Você precisa fazer parte da equipe deste atendimento." : "") && ok;
+  return ok ? {alunoMatricula:op, auxiliarMatricula:aux, circulanteMatricula:circ} : null;
+}
+function dlgEntrada(a){
+  const p = paciente(a.pacienteId);
+  open("Entrada na clínica", `
+    <div class="f full"><span class="lb">Paciente</span><b>${esc(p?.nome||"—")} · Pront. ${esc(p?.prontuario||"—")}</b><span class="hint">Aguardando desde ${esc(horaBR(ts(a,"recepcao")))} (${esc(durTxt(mins(ts(a,"recepcao"), new Date())))})</span>${p?.alergias?`<div class="alert" style="margin-top:6px">${esc(p.alergias)}</div>`:""}</div>
+    ${equipeCampos(a)}
+  `, {ok:"Registrar entrada", onOk: async () => { const d = lerEquipe(); return d ? avancar(a, "clinica", d) : false; }});
+}
+function dlgEquipe(a){
+  open("Equipe do atendimento", `<div class="f full"><span class="lb">Paciente</span><b>${esc(paciente(a.pacienteId)?.nome||"—")}</b><span class="hint">Corrija ou complete a equipe. Os horários registrados não mudam.</span></div>${equipeCampos(a)}`,
+    {ok:"Salvar equipe", onOk: async () => { const d = lerEquipe(); return d ? save(()=>B.patch("atendimentos", a.id, d), "Equipe atualizada") : false; }});
+}
+function procForm(a){
+  const p = paciente(a.pacienteId);
+  const lista = procsLista();
+  const extras = (a.procedimentos||[]).filter(x => !lista.includes(x));
+  return `
+    <div class="f full"><span class="lb">Paciente</span><b>${esc(p?.nome||"—")} · Pront. ${esc(p?.prontuario||"—")}</b>${p?.alergias?`<div class="alert" style="margin-top:6px">${esc(p.alergias)}</div>`:""}</div>
+    <div class="f full"><span class="lb">Procedimento(s) realizado(s) *</span><div class="checks">${[...lista, ...extras].map(x=>`<label><input type="checkbox" name="proc" value="${esc(x)}" ${(a.procedimentos||[]).includes(x)?"checked":""}> ${esc(x)}</label>`).join("")}</div>
+      <input type="text" id="pr-outro" placeholder="Outro procedimento (opcional)" style="margin-top:4px"><span class="err" id="pr-proc-err"></span></div>
+    ${F("pr-dentes","Dentes / região",`<input type="text" id="pr-dentes" value="${esc(a.dentes||"")}" placeholder="Notação FDI, ex.: 16, 26 ou arcada superior">`)}
+    ${F("pr-prof","Professor(a) supervisor(a)",`<select id="pr-prof">${opt(professores(), a.professorMatricula || (["professor","rt"].includes(papel())?S.meMat:""), "Selecione")}</select>`)}
+    ${F("pr-desc","Descrição do procedimento *",`<textarea id="pr-desc" rows="5" placeholder="Descreva o que foi feito, materiais, anestesia, intercorrências e orientações ao paciente.">${esc(a.descricao||"")}</textarea>`,"full")}`;
+}
+function lerProc(){
+  const procs = [...form.querySelectorAll("input[name=proc]:checked")].map(x=>x.value); const o = v("pr-outro"); if (o && !procs.includes(o)) procs.push(o);
+  let ok = err("pr-proc", procs.length ? "" : "Marque pelo menos um procedimento.");
+  ok = err("pr-desc", v("pr-desc").length < 10 ? "Descreva o procedimento (mínimo de 10 caracteres)." : "") && ok;
+  return ok ? {procedimentos:procs, dentes:v("pr-dentes"), professorMatricula:v("pr-prof"), descricao:v("pr-desc")} : null;
+}
+function dlgProcedimento(a, editar){
+  open(editar ? "Editar procedimento" : "Finalizar procedimento do dia", procForm(a), {ok: editar ? "Salvar alterações" : "Finalizar procedimento", onOk: async () => {
+    const d = lerProc(); if (!d) return false;
+    return editar ? save(()=>B.patch("atendimentos", a.id, d), "Procedimento atualizado") : avancar(a, "procedimento", d);
+  }});
+}
+function dlgLiberar(a, tipo){
+  const p = paciente(a.pacienteId);
+  const prov = tipo === "provisoria";
+  open(prov ? "Liberação provisória" : "Alta do paciente", `
+    <div class="f full"><span class="lb">Paciente</span><b>${esc(p?.nome||"—")}</b><span class="hint">${prov ? "O tratamento continua. O paciente retornará em outro dia." : "Liberação final: o tratamento deste paciente foi concluído."}</span></div>
+    ${prov ? F("lb-ret","Retorno previsto",`<input type="date" id="lb-ret" min="${kAdd(keyBR(),1)}" value="${esc(kAdd(keyBR(),7))}">`) : ""}
+    ${F("lb-nota", prov ? "Orientações para o retorno" : "Observações da alta", `<textarea id="lb-nota" rows="3" placeholder="${prov?"Ex.: continuar tratamento endodôntico do 36":"Ex.: tratamento concluído, orientado retorno semestral para manutenção"}"></textarea>`,"full")}
+  `, {ok: prov ? "Registrar liberação provisória" : "Registrar alta", onOk: async () => avancar(a, tipo, prov ? {retornoPrevisto:v("lb-ret")} : {}, v("lb-nota"))});
+}
+function dlgDetalhe(a){
+  const adm = isAdmin();
+  const podeEditarProc = adm || (isAluno() && meu(a) && a.etapa === "procedimento");
+  open("Detalhes do atendimento", `<div class="f full">${visitaHTML(a, {botao:false})}</div>
+    ${S.canWrite && adm && (a.eventos||[]).length > 1 ? `<div class="f full"><button class="btn sm" type="button" data-undo style="align-self:flex-start">Desfazer última etapa (${esc(ETAPAS[a.etapa].nome)})</button><span class="hint">Use para corrigir um clique errado. O registro da etapa é removido.</span></div>` : ""}
+    ${S.canWrite && a.alunoMatricula && (adm || (isAluno() && meu(a) && !fechado(a))) ? `<div class="f full"><button class="btn sm" type="button" data-editeq style="align-self:flex-start">Editar equipe (operador, auxiliar, circulante)</button></div>` : ""}
+    ${S.canWrite && podeEditarProc && a.procedimentos?.length ? `<div class="f full"><button class="btn sm" type="button" data-editproc style="align-self:flex-start">Editar descrição do procedimento</button></div>` : ""}`,
+    {ok:false, focus:false, del:S.canWrite && adm, delTxt:"Excluir atendimento", onDel: async () => save(()=>B.del("atendimentos", a.id), "Atendimento excluído")});
+  const u = form.querySelector("[data-undo]");
+  if (u) u.onclick = async () => { const ev = [...a.eventos]; ev.pop(); const etapa = ev[ev.length-1].etapa; const extra = a.etapa==="procedimento" ? {procedimentos:[], descricao:"", dentes:""} : a.etapa==="provisoria" ? {retornoPrevisto:""} : a.etapa==="clinica" ? {alunoMatricula:"", auxiliarMatricula:"", circulanteMatricula:""} : {}; if (await save(()=>B.patch("atendimentos", a.id, {etapa, eventos:ev, ...extra}), "Etapa desfeita")) dlg.close(); };
+  const ep = form.querySelector("[data-editproc]"); if (ep) ep.onclick = () => dlgProcedimento(a, true);
+  const eq = form.querySelector("[data-editeq]"); if (eq) eq.onclick = () => dlgEquipe(a);
+}
+function dlgInst(){
+  open("Identificação da clínica", `
+    ${F("in-nome","Nome que aparece abaixo de CORA",`<input type="text" id="in-nome" value="${esc(S.inst)}" maxlength="90" placeholder="Ex.: Clínica-escola odontológica da sua instituição e cidade">`,"full","Aparece no topo de todas as telas e na tela de entrada. É exibido em letras maiúsculas.")}
+  `, {onOk: async () => save(()=>B.set("config","instituicao",{nome:v("in-nome").replace(/\s+/g," ")}), "Nome da clínica atualizado")});
+}
+function dlgSemestres(){
+  const y = +keyBR().slice(0,4);
+  const l = S.semestres?.length ? S.semestres : semestresLista(y).filter(s => +s.nome.slice(0,4) === y);
+  const rows = l.concat([{nome:"",inicio:"",fim:""}]);
+  open("Semestres letivos", `<p class="f full" style="margin:0;color:var(--muted);font-size:13px">Defina as datas de início e fim de cada semestre letivo. Deixe a linha em branco para ignorá-la.</p>
+    ${rows.map((s,i)=>`<div class="f full" style="display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1fr) minmax(0,1fr);gap:8px"><input type="text" id="sm-n${i}" value="${esc(s.nome)}" placeholder="Ex.: 2026.2" aria-label="Nome"><input type="date" id="sm-i${i}" value="${esc(s.inicio)}" aria-label="Início"><input type="date" id="sm-f${i}" value="${esc(s.fim)}" aria-label="Fim"></div>`).join("")}<span class="err f full" id="sm-err"></span>`,
+    {onOk: async () => {
+      const lista = rows.map((_,i)=>({nome:v("sm-n"+i), inicio:v("sm-i"+i), fim:v("sm-f"+i)})).filter(s=>s.nome||s.inicio||s.fim);
+      if (lista.some(s=>!s.nome||!s.inicio||!s.fim||s.fim<s.inicio)) return err("sm","Preencha nome, início e fim (fim depois do início) em cada linha.");
+      return save(()=>B.set("config","semestres",{lista}), "Semestres salvos");
+    }});
+}
+function dlgProcs(lista){
+  lista = lista || [...procsLista()];
+  const draw = () => {
+    form.querySelector("#pl").innerHTML = lista.map((x,i)=>`<div class="pl-row"><span class="mono" style="color:var(--muted);width:22px;text-align:right">${i+1}</span><input type="text" data-pl="${i}" value="${esc(x)}" aria-label="Procedimento ${i+1}"><button class="btn sm ghost" type="button" data-up="${i}" aria-label="Subir" ${i===0?"disabled":""}>↑</button><button class="btn sm ghost" type="button" data-down="${i}" aria-label="Descer" ${i===lista.length-1?"disabled":""}>↓</button><button class="btn sm ghost" type="button" data-rm="${i}" aria-label="Remover" style="color:var(--bad)">✕</button></div>`).join("");
+  };
+  open("Lista de procedimentos", `
+    <p class="f full" style="margin:0;color:var(--muted);font-size:13px">Esta lista aparece para o aluno ao finalizar o procedimento. Alterar ou remover um item não muda os registros já feitos.</p>
+    <div class="f full"><div id="pl" class="pl"></div></div>
+    <div class="f full"><label for="pl-novo">Adicionar procedimento</label><div class="row" style="flex-wrap:nowrap"><input type="text" id="pl-novo" placeholder="Ex.: Clareamento dental"><button class="btn" type="button" id="pl-add">Adicionar</button></div><span class="err" id="pl-err"></span></div>
+    <div class="f full"><button class="btn sm" type="button" id="pl-reset" style="align-self:flex-start">Restaurar lista padrão</button></div>
+  `, {focus:false, onOk: async () => {
+      lista = lista.map(x=>x.trim()).filter(Boolean);
+      if (!lista.length) return err("pl","A lista precisa ter pelo menos um procedimento.");
+      if (new Set(lista.map(norm)).size !== lista.length) return err("pl","Há procedimentos repetidos na lista.");
+      return save(()=>B.set("config","procedimentos",{lista}), "Lista de procedimentos salva");
+    }});
+  draw();
+  const pl = form.querySelector("#pl");
+  pl.addEventListener("input", (e) => { const i = e.target.dataset.pl; if (i != null) lista[+i] = e.target.value; });
+  pl.addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return; const d = b.dataset;
+    if (d.up) { const i = +d.up; [lista[i-1], lista[i]] = [lista[i], lista[i-1]]; }
+    else if (d.down) { const i = +d.down; [lista[i+1], lista[i]] = [lista[i], lista[i+1]]; }
+    else if (d.rm) lista.splice(+d.rm, 1);
+    draw();
+  });
+  const add = () => { const n = v("pl-novo"); if (!n) return; if (lista.some(x=>norm(x)===norm(n))) return err("pl","Este procedimento já está na lista."); err("pl"); lista.push(n); form.querySelector("#pl-novo").value = ""; draw(); };
+  form.querySelector("#pl-add").onclick = add;
+  form.querySelector("#pl-novo").onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); add(); } };
+  form.querySelector("#pl-reset").onclick = () => { lista = [...PROCS_PADRAO]; draw(); toast("Lista padrão restaurada. Clique em Salvar para aplicar."); };
+}
+
+/* ===== eventos ===== */
+document.addEventListener("click", async (e) => {
+  const t = e.target.closest("[data-tab],[data-act],[data-go]"); if (!t || form.contains(t)) return;
+  const act = t.dataset.act;
+  if (t.dataset.tab) { S.view = t.dataset.tab; try { localStorage.setItem(LKEY+"-view", S.view); } catch {} render(); window.scrollTo(0,0); }
+  else if (t.dataset.go) { S.view = t.dataset.go; if (t.dataset.go==="identificacao") S.idSub = "colaboradores"; render(); }
+  else if (act === "identificar") dlgIdentificar();
+  else if (act === "gate") { t.disabled = true; const m = await identificar($("#gate-mat")?.value || ""); t.disabled = false; const el = $("#gate-err"); if (el) el.textContent = m || ""; }
+  else if (act === "checkin") dlgCheckin();
+  else if (act === "novo-pac") { if (isRecep()) dlgPaciente(null, S.view==="checkin" ? (id)=>dlgCheckin(id) : null); }
+  else if (act === "novo-aluno") dlgMembro(null, "aluno");
+  else if (act === "novo-colab") dlgMembro(null, "colab");
+  else if (act === "novo-temp") dlgTemp();
+  else if (act === "semestres") dlgSemestres();
+  else if (act === "config") dlgProcs();
+  else if (act === "inst") dlgInst();
+});
+view.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  if (e.target.id === "gate-mat") { e.preventDefault(); $("[data-act=gate]")?.click(); }
+  else if (e.target.dataset?.psel) { S.progSel = e.target.dataset.psel; render(); }
+  else if (e.target.dataset?.asel) { S.progAluno = e.target.dataset.asel; render(); }
+  else if (e.target.dataset?.ver) { const x = S.atend.find(y=>y.id===e.target.dataset.ver); if (x) dlgDetalhe(x); }
+});
+view.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-step],[data-ver],[data-idsub],[data-edit-m],[data-edit-p],[data-prog],[data-psel],[data-asel],[data-pf],[data-openpac],[data-logclear],[data-per],[data-mv],[data-prod],[data-prodaluno]"); if (!t) return;
+  const d = t.dataset, a = d.id ? S.atend.find(x=>x.id===d.id) : null;
+  if (d.step && a) { if (!podeAgir(a)) return toast("Você não tem permissão para esta etapa."); if (d.step==="clinica") dlgEntrada(a); else if (d.step==="procedimento") dlgProcedimento(a); else dlgLiberar(a, d.step); }
+  else if (d.ver) { const x = S.atend.find(y=>y.id===d.ver); if (x) dlgDetalhe(x); }
+  else if (d.idsub) { if (S.idSub !== d.idsub) { S.memFiltro = ""; S.memBusca = ""; } S.idSub = d.idsub; render(); }
+  else if (d.editM) dlgMembro(membro(d.editM));
+  else if (d.editP) dlgPaciente(paciente(d.editP));
+  else if (d.prog) { S.progMode = d.prog; render(); }
+  else if (d.psel) { S.progSel = d.psel; render(); }
+  else if (d.asel) { S.progAluno = d.asel; render(); }
+  else if (d.pf) { S.progFiltro = d.pf; render(); }
+  else if (d.openpac) { S.progMode = "paciente"; S.progSel = d.openpac; render(); window.scrollTo(0,0); }
+  else if ("logclear" in d) { S.logDia = ""; render(); }
+  else if (d.per) { S.per = d.per; render(); }
+  else if (d.mv) mover(+d.mv);
+  else if (d.prod != null) { [S.prodIni, S.prodFim] = d.prod.split("|"); render(); }
+  else if (d.prodaluno) { const P = periodo(); S.view = "progresso"; S.progMode = "aluno"; S.progAluno = d.prodaluno; S.prodIni = P.ini; S.prodFim = P.fim; render(); window.scrollTo(0,0); }
+});
+view.addEventListener("input", (e) => {
+  const id = e.target.id;
+  if (id === "mem-busca") { S.memBusca = e.target.value; render(); }
+  if (id === "pac-busca") { S.pacBusca = e.target.value; render(); }
+  if (id === "prog-busca") { S.progBusca = e.target.value; render(); }
+  if (id === "prod-busca") { S.prodBusca = e.target.value; render(); }
+});
+view.addEventListener("change", (e) => {
+  const id = e.target.id;
+  if (id === "mem-filtro") { S.memFiltro = e.target.value; render(); }
+  if (id === "log-dia") { S.logDia = e.target.value; render(); }
+  if (id === "ref" && e.target.value) { S.ref = e.target.value; render(); }
+  if (id === "prod-ini") { S.prodIni = e.target.value; render(); }
+  if (id === "prod-fim") { S.prodFim = e.target.value; render(); }
+});
+const tip = $("#tip");
+view.addEventListener("pointerover", (e) => { const t = e.target.closest("[data-tip]"); if (!t) return; tip.textContent = t.dataset.tip; tip.hidden = false; });
+view.addEventListener("pointermove", (e) => { if (tip.hidden) return; const x = Math.min(e.clientX + 12, innerWidth - tip.offsetWidth - 8); tip.style.left = x + "px"; tip.style.top = (e.clientY - 34) + "px"; });
+view.addEventListener("pointerout", (e) => { if (e.target.closest("[data-tip]")) tip.hidden = true; });
+let tT; function toast(m){ const t = $("#toast"); t.textContent = m; t.hidden = false; clearTimeout(tT); tT = setTimeout(()=>t.hidden = true, 3400); }
+
+/* ===== inicialização ===== */
+try { const v0 = localStorage.getItem(LKEY+"-view"); if (v0) S.view = v0; } catch {}
+render();
+setInterval(tick, 20000);
+
+(async function boot(){
+  const use = window.claude?.use;
+  const db = use ? await use("db").catch(()=>null) : null;
+  if (!db) { S.mode = "local"; B = local; local.load(); S.isOwner = !S.membros.length || !S.meMat; render(); return; }
+  B = remote(db);
+  const user = await use("user").catch(()=>null);
+  if (user) {
+    try { S.isOwner = !!(await user.isOwner()); } catch { S.isOwner = false; }
+    try { S.canAdmin = !!(await user.canEdit()); } catch { S.canAdmin = false; }
+    try { const c = await user.can("data.write"); if (c === false) S.canWrite = false; } catch {}
+    try { S.uid = await user.id(); } catch {}
+  } else { S.isOwner = false; S.canAdmin = false; }
+  render();
+  if (S.uid) db.doc("vinculos/"+S.uid).get().then(s => { if (s.exists) { S.meMat = s.data().matricula || null; render(); } }).catch(()=>{});
+  const cols = {membros:"membros", pacientes:"pacientes", atendimentos:"atend"};
+  const got = {membros:false, pacientes:false, atendimentos:false};
+  const timer = setTimeout(() => { if (S.mode !== "db") { S.mode = "slow"; render(); } }, 10000);
+  const done = () => { if (Object.values(got).every(Boolean)) { clearTimeout(timer); S.mode = "db"; } };
+  const fail = (e) => { clearTimeout(timer); S.mode = "db"; if (e?.code === "revoked") S.canWrite = false; render(); toast("A conexão com os dados foi interrompida. Recarregue a página."); };
+  for (const [c, k] of Object.entries(cols)) {
+    db.collection(c).onSnapshot((snap) => {
+      S[k] = snap.docs.map(d => ({id:d.id, ...d.data()}));
+      if (!snap.metadata.fromCache) got[c] = true;
+      done(); render();
+    }, fail);
+  }
+  db.doc("config/instituicao").onSnapshot((s) => { S.inst = s.exists ? (s.data().nome || "") : ""; render(); }, ()=>{});
+  db.doc("config/semestres").onSnapshot((s) => { S.semestres = s.exists ? (s.data().lista || null) : null; render(); }, ()=>{});
+  db.doc("config/procedimentos").onSnapshot((s) => { S.procs = s.exists ? (s.data().lista || null) : null; render(); }, ()=>{});
+})();
+})();
+</script>
+</body>
+</html>
