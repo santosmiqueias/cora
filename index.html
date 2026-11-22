@@ -318,6 +318,43 @@ dialog::backdrop{background:rgba(8,17,43,.55);backdrop-filter:blur(2px)}
 @media (max-width:600px){.flow{grid-template-columns:minmax(0,1fr)}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dlg-b{grid-template-columns:minmax(0,1fr)}.checks{grid-template-columns:minmax(0,1fr)}.kmini{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 .bottomnav:empty{display:none}
+.me{flex-wrap:wrap}
+.me-acts{display:flex;gap:6px;width:100%;padding-left:48px}
+.me-acts .btn{flex:1}
+.me-acts .btn:first-child{flex:0 0 auto}
+.cred{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.cred div{background:var(--accent-soft);border-radius:12px;padding:12px}
+.cred span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:800}
+.cred b{font-family:var(--f-mono);font-size:22px;color:var(--accent);letter-spacing:.04em;user-select:all;overflow-wrap:anywhere}
+input[type=password]{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 12px;width:100%;min-width:0;min-height:40px}
+.kpi .dl{display:block;margin-top:4px;font-weight:700;font-size:12px}
+.kpi .dl.bom{color:var(--s-alta)} .kpi .dl.ruim{color:var(--bad)} .kpi .dl.neutro{color:var(--muted);font-weight:500}
+.kpi.hl .dl,.kpi.hl .dl.bom,.kpi.hl .dl.ruim,.kpi.hl .dl.neutro{color:color-mix(in srgb,var(--accent-ink) 85%,transparent)}
+.dash{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:stretch}
+.dash .span-2{grid-column:span 2}
+.dash2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+.panel-h .hint{color:var(--muted);font-size:12.5px}
+.chart .line{fill:none;stroke:var(--bar);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.chart .area{fill:var(--bar);opacity:.1}
+.chart .dot{fill:var(--bar);stroke:var(--surface);stroke-width:2}
+.chart .dot.end{fill:var(--accent-2)}
+.chart g:hover .dot{r:6}
+:root{--d-and:#3f6fd8;--d-prov:#b34a12;--d-alta:#1c7a4a}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--d-and:#5b82e0;--d-prov:#d27240;--d-alta:#34a56b}}
+:root[data-theme="dark"]{--d-and:#5b82e0;--d-prov:#d27240;--d-alta:#34a56b}
+.d-and{background:var(--d-and)} .d-prov{background:var(--d-prov)} .d-alta{background:var(--d-alta)}
+.sbar{display:flex;gap:2px;height:26px;border-radius:8px;overflow:hidden;margin:6px 0 16px}
+.sbar span{min-width:4px}
+.legend{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.legend li{display:grid;grid-template-columns:14px minmax(0,1fr) auto 44px;gap:10px;align-items:center;font-size:13.5px}
+.legend i{width:14px;height:14px;border-radius:4px}
+.legend b{font-variant-numeric:tabular-nums;font-family:var(--f-display)}
+.legend em{font-style:normal;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+td:first-child,th:first-child{min-width:190px}
+.th-sort{border:0;background:none;padding:0;font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;cursor:pointer}
+.th-sort:hover{color:var(--accent-2)}
+@media (max-width:1180px){.dash{grid-template-columns:repeat(2,minmax(0,1fr))}.dash .span-2{grid-column:1/-1}}
+@media (max-width:900px){.dash,.dash2{grid-template-columns:minmax(0,1fr)}.dash .span-2{grid-column:auto}}
 </style>
 </head>
 <body>
@@ -379,8 +416,9 @@ const ETAPAS = {
   provisoria:   {nome:"Liberação provisória", curto:"Retorna"},
   alta:         {nome:"Alta (liberação final)", curto:"Alta"},
 };
-const FUNCOES = {aluno:"Aluno(a)", professor:"Professor(a)", rt:"Responsável técnico", recepcao:"Recepção", outro:"Outro colaborador"};
-const ADMINS = ["professor","rt","recepcao"];
+const FUNCOES = {admin:"Administrador(a)", professor:"Professor(a)", rt:"Responsável técnico", recepcao:"Recepção", aluno:"Aluno(a)", outro:"Outro colaborador"};
+// Administrador, professor e responsável técnico têm acesso a tudo.
+const ADMINS = ["admin","professor","rt"];
 const PROCS_PADRAO = ["Anamnese e exame clínico","Radiografia","Profilaxia","Raspagem e alisamento radicular","Aplicação tópica de flúor","Selante","Restauração em resina composta","Restauração em ionômero de vidro","Tratamento endodôntico","Exodontia","Cirurgia periodontal","Prótese (moldagem / ajuste)","Urgência odontológica","Orientação de higiene oral"];
 
 /* ===== estado ===== */
@@ -389,34 +427,29 @@ const S = {
   inst:"", view:"checkin", idSub:"alunos", progMode:"paciente", progSel:null, progBusca:"", progFiltro:"todos", logDia:"",
   progAluno:null, prodIni:"", prodFim:"", prodBusca:"",
   memBusca:"", memFiltro:"", pacBusca:"", per:"semana", ref:keyBR(),
-  meMat:null, mode:"loading", canWrite:true, canAdmin:true, isOwner:true, uid:null,
+  meMat:null, forcarTroca:false, senhas:{}, senhasOk:false, sortAl:{k:"op", dir:-1}, dl:null,
+  mode:"loading", canWrite:true, canAdmin:true, isOwner:true, uid:null,
 };
 let B = null; // backend
 const LKEY = "odonto-escola-v1";
 const local = {
-  load(){ try { const v = JSON.parse(localStorage.getItem(LKEY)||"null"); if (v) Object.assign(S, {membros:v.membros||[], pacientes:v.pacientes||[], atend:v.atend||[], semestres:v.semestres||null, procs:v.procs||null, inst:v.inst||""}); S.meMat = localStorage.getItem(LKEY+"-me"); } catch {} },
-  save(){ try { localStorage.setItem(LKEY, JSON.stringify({membros:S.membros, pacientes:S.pacientes, atend:S.atend, semestres:S.semestres, procs:S.procs, inst:S.inst})); } catch {} },
+  load(){ try { const v = JSON.parse(localStorage.getItem(LKEY)||"null"); if (v) Object.assign(S, {membros:v.membros||[], pacientes:v.pacientes||[], atend:v.atend||[], semestres:v.semestres||null, procs:v.procs||null, inst:v.inst||"", senhas:v.senhas||{}}); } catch {} S.senhasOk = true; },
+  save(){ try { localStorage.setItem(LKEY, JSON.stringify({membros:S.membros, pacientes:S.pacientes, atend:S.atend, semestres:S.semestres, procs:S.procs, inst:S.inst, senhas:S.senhas})); } catch {} },
   col(c){ return c==="atendimentos" ? "atend" : c; },
   async add(c, d){ const id = Date.now().toString(36)+Math.random().toString(36).slice(2,7); S[this.col(c)].push({id, ...d}); this.save(); render(); return id; },
-  async set(c, id, d){ if (c==="config") { if (id==="semestres") S.semestres = d.lista; else if (id==="instituicao") S.inst = d.nome || ""; else S.procs = d.lista; this.save(); render(); return; } const a = S[this.col(c)], i = a.findIndex(x=>x.id===id); if (i>=0) a[i] = {id, ...d}; else a.push({id, ...d}); this.save(); render(); },
+  async set(c, id, d){
+    if (c==="config") { if (id==="semestres") S.semestres = d.lista; else if (id==="instituicao") S.inst = d.nome || ""; else S.procs = d.lista; this.save(); render(); return; }
+    if (c==="senhas") { S.senhas[id] = d; this.save(); render(); return; }
+    const a = S[this.col(c)], i = a.findIndex(x=>x.id===id); if (i>=0) a[i] = {id, ...d}; else a.push({id, ...d}); this.save(); render(); },
   async patch(c, id, d){ const a = S[this.col(c)], i = a.findIndex(x=>x.id===id); if (i>=0) a[i] = {...a[i], ...d}; this.save(); render(); },
-  async del(c, id){ const k = this.col(c); S[k] = S[k].filter(x=>x.id!==id); this.save(); render(); },
-  async link(mat){ S.meMat = mat; try { mat ? localStorage.setItem(LKEY+"-me", mat) : localStorage.removeItem(LKEY+"-me"); } catch {} render(); },
-  async claimedByOther(){ return false; },
-  async relink(old, nova){ if (S.meMat === old) await this.link(nova); },
-  async unlinkMat(mat){ if (S.meMat === mat) await this.link(null); },
+  async del(c, id){ if (c==="senhas") { delete S.senhas[id]; this.save(); render(); return; } const k = this.col(c); S[k] = S[k].filter(x=>x.id!==id); this.save(); render(); },
 };
 function remote(db){
-  const byMat = async (mat) => (await db.collection("vinculos").where("matricula","==",mat).get()).docs;
   return {
     async add(c, d){ return (await db.collection(c).add(d)).id; },
     async set(c, id, d){ await db.doc(c+"/"+id).set(d); },
     async patch(c, id, d){ await db.doc(c+"/"+id).update(d); },
     async del(c, id){ await db.doc(c+"/"+id).delete(); },
-    async link(mat){ if (!S.uid) throw {code:"no_user"}; if (mat) await db.doc("vinculos/"+S.uid).set({matricula:mat, em:new Date().toISOString()}); else await db.doc("vinculos/"+S.uid).delete(); S.meMat = mat; render(); },
-    async claimedByOther(mat){ return (await byMat(mat)).some(d => d.id !== S.uid); },
-    async relink(old, nova){ for (const d of await byMat(old)) await db.doc("vinculos/"+d.id).set({matricula:nova, em:new Date().toISOString()}); if (S.meMat === old) S.meMat = nova; },
-    async unlinkMat(mat){ for (const d of await byMat(mat)) await db.doc("vinculos/"+d.id).delete(); if (S.meMat === mat) S.meMat = null; },
   };
 }
 const strip = (o) => { const r = {...o}; delete r.id; return r; };
@@ -426,7 +459,6 @@ async function save(fn, ok){
     const c = e && e.code;
     if (c === "quota_exceeded") toast("Limite de armazenamento atingido. Exclua registros antigos.");
     else if (c === "invalid_argument") toast("Você não tem permissão para esta ação. Peça acesso à coordenação.");
-    else if (c === "no_user") toast("Entre na sua conta do claude.ai para vincular a matrícula.");
     else toast("Não foi possível salvar. Verifique a conexão e tente de novo.");
     return false;
   }
@@ -439,10 +471,9 @@ const paciente = (id) => S.pacientes.find(p => p.id === id);
 const me = () => membro(S.meMat);
 const papel = () => me()?.tipo || null;
 const vencido = (m) => m?.temporario && m.validade && m.validade < keyBR();
-// Professor, responsável técnico e recepção têm critérios de administrador.
-const isAdmin = () => S.isOwner || (S.canAdmin && ADMINS.includes(papel()));
-// Cadastro de paciente e check-in na recepção: só a recepção.
-const isRecep = () => S.isOwner || (S.canAdmin && papel() === "recepcao");
+const isAdmin = () => !!me() && !S.forcarTroca && S.canAdmin && ADMINS.includes(papel());
+// Recepção: cadastro de pacientes e check-in de chegada (o administrador também pode).
+const isRecep = () => isAdmin() || (!!me() && S.canAdmin && papel() === "recepcao");
 const isAluno = () => S.canWrite && papel() === "aluno" && !vencido(me());
 const podeEtapas = () => isAdmin() || isAluno();
 const equipe = (a) => [a.alunoMatricula, a.auxiliarMatricula, a.circulanteMatricula].filter(Boolean);
@@ -466,6 +497,40 @@ const statusPac = (p) => {
 const alunosTxt = (a) => a.alunoMatricula ? equipe(a).map(nomeM).join(" + ") : "a definir";
 const tamEquipe = (a) => ["", "solo", "dupla", "trio"][equipe(a).length] || "";
 
+/* ===== senhas e sessão ===== */
+const b64e = (u8) => btoa(String.fromCharCode(...u8));
+const b64d = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function hashSenha(senha, saltB64, iter = 210000){
+  const salt = saltB64 ? b64d(saltB64) : crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(senha), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({name:"PBKDF2", hash:"SHA-256", salt, iterations:iter}, key, 256);
+  return {alg:"PBKDF2-SHA256", iter, salt:b64e(salt), hash:b64e(new Uint8Array(bits))};
+}
+async function confere(senha, rec){
+  if (!rec?.hash) return false;
+  const h = await hashSenha(senha, rec.salt, rec.iter);
+  let d = h.hash.length ^ rec.hash.length; for (let i = 0; i < Math.min(h.hash.length, rec.hash.length); i++) d |= h.hash.charCodeAt(i) ^ rec.hash.charCodeAt(i);
+  return d === 0;
+}
+const senhaFraca = (s) => s.length < 8 ? "A senha precisa ter pelo menos 8 caracteres." : !/[A-Za-z]/.test(s) || !/\d/.test(s) ? "Use letras e números na senha." : "";
+function senhaProvisoria(){
+  const A = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789"; let s;
+  do { s = Array.from(crypto.getRandomValues(new Uint32Array(8)), n => A[n % A.length]).join(""); } while (!/\d/.test(s) || !/[A-Za-z]/.test(s));
+  return s;
+}
+async function gravarSenha(mat, senha, provisoria){
+  const rec = await hashSenha(senha);
+  await B.set("senhas", mat, {...rec, trocar:!!provisoria, em:new Date().toISOString(), por:S.meMat||""});
+}
+const SKEY = "cora-sessao", INATIVO_MIN = 30;
+function lerSessao(){ try { const x = JSON.parse(sessionStorage.getItem(SKEY)||"null"); if (x && Date.now() - x.last < INATIVO_MIN*60000) return x; } catch {} return null; }
+function gravarSessao(){ try { S.meMat ? sessionStorage.setItem(SKEY, JSON.stringify({mat:S.meMat, troca:S.forcarTroca, last:Date.now()})) : sessionStorage.removeItem(SKEY); } catch {} }
+function sair(msg){ S.meMat = null; S.forcarTroca = false; gravarSessao(); try { localStorage.removeItem(LKEY+"-view"); } catch {} S.view = "checkin"; render(); if (msg) toast(msg); }
+let ultimoUso = Date.now();
+["pointerdown","keydown"].forEach(ev => document.addEventListener(ev, () => { ultimoUso = Date.now(); if (S.meMat) gravarSessao(); }, {passive:true}));
+setInterval(() => { if (S.meMat && Date.now() - ultimoUso > INATIVO_MIN*60000) { if (dlg.open) dlg.close(); sair("Sessão encerrada após 30 minutos sem uso. Entre de novo."); } }, 30000);
+const precisaConfigurar = () => S.senhasOk && !Object.keys(S.senhas).length;
+
 /* ===== render ===== */
 const view = $("#view");
 const ICON = {
@@ -474,8 +539,8 @@ const ICON = {
   prog:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><path d="M5 8v8M10 6h10M10 12h7M10 18h10"/></svg>',
   met:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
 };
-const liberado = () => S.isOwner || !!me();
-const NOMES = {checkin:"Check-in", identificacao:"Identificação", progresso:"Progresso", metricas:"Métricas"};
+const liberado = () => !!me() && !S.forcarTroca;
+const NOMES = {checkin:"Check-in", identificacao:"Identificação", progresso:"Progresso", metricas:"Métricas", producao:"Minha produção"};
 const ICON_CFG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>';
 const ICON_CAL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
 const RING = (mid = "#ffffff", fim = "#f2707b") => `<svg viewBox="0 0 100 100" aria-hidden="true"><g transform="rotate(-86 50 50)" fill="none" stroke-width="14" stroke-linecap="round">${[["#f4b400",0],[mid,-47.75],[mid,-95.5],[mid,-143.26],[fim,-191]].map(([c,o])=>`<circle cx="50" cy="50" r="38" stroke="${c}" stroke-dasharray="33 205.76" stroke-dashoffset="${o}"></circle>`).join("")}</g></svg>`;
@@ -486,6 +551,8 @@ function renderTabs(){
   if (liberado()) {
     tabs.push(["checkin","Check-in",ICON.checkin]);
     if (isAdmin()) tabs.push(["identificacao","Identificação",ICON.ident],["progresso","Progresso",ICON.prog],["metricas","Métricas",ICON.met]);
+    else if (isRecep()) tabs.push(["identificacao","Pacientes",ICON.ident]);
+    else if (papel() === "aluno") tabs.push(["producao","Minha produção",ICON.prog]);
   }
   if (!tabs.some(t => t[0] === S.view)) S.view = "checkin";
   const aguard = S.atend.filter(a => a.etapa === "recepcao").length;
@@ -493,7 +560,7 @@ function renderTabs(){
   $("#tabs").innerHTML = (tabs.length ? `<div class="nav-lbl">Menu</div>` : "") + tabs.map(item).join("")
     + (isAdmin() ? `<div class="nav-lbl">Configurações</div><button class="nav-i" type="button" data-act="config">${ICON_CFG}<span>Procedimentos</span></button><button class="nav-i" type="button" data-act="semestres">${ICON_CAL}<span>Semestres letivos</span></button>` : "");
   $("#bnav").innerHTML = tabs.length > 1 ? tabs.map(item).join("") : "";
-  $("#crumb").innerHTML = liberado() ? `<span>CORA</span><span class="sep">/</span><b>${NOMES[S.view]}</b>` : "";
+  $("#crumb").innerHTML = liberado() ? `<span>CORA</span><span class="sep">/</span><b>${S.view === "identificacao" && !isAdmin() ? "Pacientes" : NOMES[S.view]}</b>` : "";
 }
 function renderInst(){
   const el = $("#inst"); if (!el) return;
@@ -504,11 +571,12 @@ function renderInst(){
   document.title = S.inst ? `CORA · ${S.inst}` : "CORA";
 }
 function renderMe(){
-  const m = me();
-  const role = m ? (m.temporario ? "Acesso temporário" : FUNCOES[m.tipo] || "") : S.isOwner ? "Responsável pelo app" : "Não identificado";
+  const m = liberado() ? me() : null;
+  const role = m ? (m.temporario ? "Acesso temporário" : FUNCOES[m.tipo] || "") : "";
   const ini = m ? iniciais(m.nome) : "?";
-  $("#me").innerHTML = `<span class="avatar${m ? "" : " off"}" aria-hidden="true">${esc(ini)}</span><span class="me-txt"><b>${esc(m ? m.nome : "Sem matrícula")}</b><span>${esc(role)}</span></span>${m || S.isOwner ? `<button class="btn sm${m ? "" : " primary"}" type="button" data-act="identificar">${m ? "Trocar" : "Entrar"}</button>` : ""}`;
-  $("#mme").innerHTML = (m || S.isOwner) && liberado() ? `<button class="avatar${m ? "" : " off"}" type="button" data-act="identificar" style="border:0;cursor:pointer" aria-label="${m ? "Trocar usuário (" + esc(m.nome) + ")" : "Informar matrícula"}">${esc(ini)}</button>` : "";
+  $("#me").innerHTML = m ? `<span class="avatar" aria-hidden="true">${esc(ini)}</span><span class="me-txt"><b>${esc(m.nome)}</b><span>${esc(role)}</span></span>
+    <span class="me-acts"><button class="btn sm" type="button" data-act="trocar-senha" title="Trocar senha" aria-label="Trocar senha"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></button><button class="btn sm" type="button" data-act="sair">Sair</button></span>` : "";
+  $("#mme").innerHTML = m ? `<button class="avatar" type="button" data-act="conta" style="border:0;cursor:pointer" aria-label="Conta de ${esc(m.nome)}">${esc(ini)}</button>` : "";
 }
 function tick(){
   $("#clock").innerHTML = `<i aria-hidden="true"></i>Brasília · <b>${esc(fRelogio.format(new Date()))}</b>`;
@@ -516,13 +584,30 @@ function tick(){
 }
 function vGate(){
   const topo = `<div class="gate-top">${WORDMARK()}<p>Controle Odontológico de Registros e Atendimentos</p>${S.inst ? `<div class="inst">${esc(S.inst)}</div>` : ""}</div>`;
-  if (S.mode === "loading") return `<div class="gate-wrap"><div class="gate">${topo}<div class="gate-body"><p>Carregando…</p></div></div></div>`;
-  if (!S.membros.length) return `<div class="gate-wrap"><div class="gate">${topo}<div class="gate-body"><div><h1>Sistema ainda não configurado</h1><p>Peça ao responsável pelo app para cadastrar a recepção, os professores e os alunos.</p></div></div></div></div>`;
-  return `<div class="gate-wrap"><div class="gate">${topo}<div class="gate-body">
-    <div><h1>Entrar</h1><p>Use sua matrícula institucional ou o código de acesso temporário entregue pela recepção.</p></div>
-    <div class="f"><label for="gate-mat">Matrícula ou código temporário</label><input type="text" id="gate-mat" autocomplete="off" placeholder="Ex.: 20231045 ou TMP-4821"><span class="err" id="gate-err"></span></div>
+  const card = (body) => `<div class="gate-wrap"><div class="gate">${topo}<div class="gate-body">${body}</div></div></div>`;
+  if (S.mode === "loading" || !S.senhasOk) return card(`<p>Carregando…</p>`);
+  if (S.forcarTroca && me()) return card(`
+    <div><h1>Crie sua senha</h1><p>Olá, ${esc(me().nome.split(" ")[0])}. Você entrou com uma senha provisória. Escolha uma senha pessoal para continuar.</p></div>
+    <div class="f"><label for="nv-1">Nova senha</label><input type="password" id="nv-1" autocomplete="new-password"><span class="hint">Pelo menos 8 caracteres, com letras e números.</span></div>
+    <div class="f"><label for="nv-2">Repita a nova senha</label><input type="password" id="nv-2" autocomplete="new-password"><span class="err" id="gate-err"></span></div>
+    <button class="btn primary" type="button" data-act="nova-senha">Salvar senha e entrar</button>
+    <button class="btn ghost" type="button" data-act="sair">Cancelar</button>`);
+  if (precisaConfigurar()) {
+    if (!(S.mode === "local" || S.isOwner)) return card(`<div><h1>Sistema ainda não configurado</h1><p>O responsável pelo CORA precisa criar a conta do primeiro administrador.</p></div>`);
+    return card(`
+      <div><h1>Configuração inicial</h1><p>Crie a conta do primeiro administrador. Depois, entre com ela para cadastrar a equipe e definir as senhas de cada pessoa.</p></div>
+      <div class="f"><label for="cf-mat">Matrícula do administrador</label><input type="text" id="cf-mat" autocomplete="username"></div>
+      <div class="f"><label for="cf-nome">Nome completo</label><input type="text" id="cf-nome" autocomplete="name"></div>
+      <div class="f"><label for="cf-1">Senha</label><input type="password" id="cf-1" autocomplete="new-password"><span class="hint">Pelo menos 8 caracteres, com letras e números.</span></div>
+      <div class="f"><label for="cf-2">Repita a senha</label><input type="password" id="cf-2" autocomplete="new-password"><span class="err" id="gate-err"></span></div>
+      <button class="btn primary" type="button" data-act="setup">Criar administrador</button>`);
+  }
+  return card(`
+    <div><h1>Entrar</h1><p>Use sua matrícula (ou código temporário) e sua senha.</p></div>
+    <div class="f"><label for="gate-mat">Matrícula ou código temporário</label><input type="text" id="gate-mat" autocomplete="username" placeholder="Ex.: 20231045 ou TMP-4821"></div>
+    <div class="f"><label for="gate-pw">Senha</label><input type="password" id="gate-pw" autocomplete="current-password"><span class="err" id="gate-err"></span></div>
     <button class="btn primary" type="button" data-act="gate">Entrar no CORA</button>
-  </div></div></div>`;
+    <p class="hint" style="margin:0;font-size:12.5px;color:var(--muted)">Esqueceu a senha? Peça ao administrador uma senha provisória.</p>`);
 }
 function render(){
   const ae = document.activeElement, aid = ae && view.contains(ae) ? ae.id : null;
@@ -534,12 +619,11 @@ function render(){
   if (S.mode === "slow") pre += `<div class="banner warn">Os dados ainda não chegaram do servidor. A página atualiza sozinha assim que a conexão responder.</div>`;
   if (!liberado()) { view.innerHTML = pre + vGate(); restore(aid, sel); tick(); return; }
   const m = me();
-  if (S.mode !== "loading" && !S.membros.length && isAdmin()) pre += `<div class="banner"><span><b>Primeiro passo:</b> cadastre a recepção, os professores e os alunos na aba Identificação.</span><button class="btn sm primary" type="button" data-go="identificacao">Ir para Identificação</button></div>`;
-  else if (S.mode !== "loading" && !m && S.isOwner) pre += `<div class="banner"><span>Você tem acesso total como responsável pelo app. Informe sua matrícula para assinar os registros com seu nome.</span><button class="btn sm primary" type="button" data-act="identificar">Informar matrícula</button></div>`;
-  if (m && ADMINS.includes(m.tipo) && !S.canAdmin && S.mode === "db") pre += `<div class="banner warn">Sua função é de administrador, mas sua conta ainda não tem acesso de Editor a este app. Peça ao responsável para compartilhar com você como Editor.</div>`;
-  if (vencido(m)) pre += `<div class="banner warn">Seu código temporário venceu em ${esc(kShort(m.validade))}. Procure a recepção para renovar ou cadastrar sua matrícula definitiva.</div>`;
+  if (isAdmin() && S.membros.length <= 1) pre += `<div class="banner"><span><b>Próximo passo:</b> cadastre a recepção, os professores e os alunos em Identificação. Cada cadastro gera uma senha provisória.</span><button class="btn sm primary" type="button" data-go="identificacao">Ir para Identificação</button></div>`;
+  if (m && (ADMINS.includes(m.tipo) || m.tipo === "recepcao") && !S.canAdmin && S.mode === "db") pre += `<div class="banner warn">Sua função pede acesso de Editor a este app, que sua conta do claude.ai ainda não tem. Peça ao responsável para compartilhar com você como Editor.</div>`;
+  if (vencido(m)) pre += `<div class="banner warn">Seu código temporário venceu em ${esc(kShort(m.validade))}. Procure o administrador para renovar ou cadastrar sua matrícula definitiva.</div>`;
   if (!S.canWrite) pre += `<div class="banner">Você tem acesso somente de leitura.</div>`;
-  const fn = {checkin:vCheckin, identificacao:vIdent, progresso:vProgresso, metricas:vMetricas}[S.view];
+  const fn = {checkin:vCheckin, identificacao:vIdent, progresso:vProgresso, metricas:vMetricas, producao:() => vProducao(true)}[S.view];
   view.innerHTML = pre + fn();
   restore(aid, sel); tick();
 }
@@ -575,7 +659,7 @@ function vCheckin(){
   const lib = ativos.filter(fechado).sort((a,b) => (ts(b,b.etapa)||"").localeCompare(ts(a,a.etapa)||""));
   const esperas = ativos.filter(a => ts(a,"clinica") && a.dataBR===hoje).map(a => mins(ts(a,"recepcao"), ts(a,"clinica")));
   const media = esperas.length ? esperas.reduce((x,y)=>x+y,0)/esperas.length : null;
-  const papelTxt = isRecep() && !S.isOwner ? "Recepção: cadastre pacientes e registre a chegada." : isAluno() ? "Registre a entrada do paciente na clínica, finalize o procedimento e libere o paciente. Seus atendimentos aparecem destacados." : "";
+  const papelTxt = papel() === "recepcao" ? "Recepção: cadastre pacientes e registre a chegada." : isAluno() ? "Registre a entrada do paciente na clínica, finalize o procedimento e libere o paciente. Seus atendimentos aparecem destacados." : "";
   return `<div class="head"><div><h1>Check-in</h1><p>${esc((d => d.charAt(0).toUpperCase() + d.slice(1))(kDate(hoje,{weekday:"long",day:"numeric",month:"long"})))}</p>${papelTxt?`<p style="font-size:13px">${papelTxt}</p>`:""}</div>
     ${isRecep() && S.canWrite ? `<div class="row"><button class="btn" type="button" data-act="novo-pac">Cadastrar paciente</button><button class="btn primary" type="button" data-act="checkin">+ Check-in na recepção</button></div>` : ""}</div>
   ${S.mode === "loading" ? `<div class="panel"><div class="empty">Carregando atendimentos…</div></div>` : `
@@ -597,11 +681,13 @@ function vCheckin(){
 /* ----- aba Identificação ----- */
 function vIdent(){
   const nAl = S.membros.filter(m=>m.tipo==="aluno").length, nCo = S.membros.length - nAl;
+  if (!isAdmin()) S.idSub = "pacientes";
   if (!["alunos","colaboradores","pacientes"].includes(S.idSub)) S.idSub = "alunos";
-  const sub = `<div class="seg" role="group">
+  const sub = !isAdmin() ? "" : `<div class="seg" role="group">
     <button type="button" data-idsub="alunos" aria-pressed="${S.idSub==="alunos"}">Alunos (${nAl})</button>
     <button type="button" data-idsub="colaboradores" aria-pressed="${S.idSub==="colaboradores"}">Colaboradores (${nCo})</button>
     <button type="button" data-idsub="pacientes" aria-pressed="${S.idSub==="pacientes"}">Pacientes (${S.pacientes.length})</button></div>`;
+  const senhaTag = (m) => { const r = S.senhas[m.matricula]; return !r ? '<span class="pill e-provisoria">Sem senha</span>' : r.trocar ? '<span class="pill e-recepcao">Provisória</span>' : '<span class="pill e-alta">Definida</span>'; };
   if (S.idSub !== "pacientes") {
     const al = S.idSub === "alunos";
     const q = norm(S.memBusca);
@@ -610,20 +696,20 @@ function vIdent(){
       && (!q || norm(m.nome).includes(q) || norm(m.matricula).includes(q))).sort(porNome);
     const filtros = al ? `<option value="">Todos os alunos</option><option value="def" ${S.memFiltro==="def"?"selected":""}>Com matrícula</option><option value="temp" ${S.memFiltro==="temp"?"selected":""}>Com código temporário</option>`
       : `<option value="">Todas as funções</option>${Object.entries(FUNCOES).filter(([k])=>k!=="aluno").map(([k,n])=>`<option value="${k}" ${S.memFiltro===k?"selected":""}>${n}</option>`).join("")}`;
-    return `<div class="head"><div><h1>Identificação</h1><p>${al ? "Alunos cadastrados por matrícula institucional e nome completo. Quem ainda não tem matrícula recebe um código temporário." : "Professores, responsável técnico, recepção e demais colaboradores. Professores, responsável técnico e recepção são administradores."}</p></div>
+    return `<div class="head"><div><h1>Identificação</h1><p>${al ? "Alunos cadastrados por matrícula institucional e nome completo. Quem ainda não tem matrícula recebe um código temporário." : "Administradores, professores, responsável técnico, recepção e demais colaboradores. Administrador, professor e responsável técnico têm acesso a tudo; a recepção cuida dos pacientes e do check-in."}</p></div>
       ${S.canWrite ? (al ? `<div class="row"><button class="btn" type="button" data-act="novo-temp">Gerar código temporário</button><button class="btn primary" type="button" data-act="novo-aluno">+ Cadastrar aluno</button></div>` : `<button class="btn primary" type="button" data-act="novo-colab">+ Cadastrar colaborador</button>`) : ""}</div>
     ${sub}
     <section class="panel"><div class="panel-h" style="gap:10px">
       <div class="row" style="flex:1;min-width:0"><input type="search" id="mem-busca" placeholder="Buscar por nome, matrícula${al?" ou código":""}" value="${esc(S.memBusca)}" style="max-width:340px" aria-label="Buscar">
       <select id="mem-filtro" style="width:auto" aria-label="Filtrar">${filtros}</select></div></div>
-      <div class="tbl-wrap"><table><thead><tr><th>${al?"Matrícula / código":"Matrícula"}</th><th>Nome completo</th>${al?"":"<th>Função</th>"}<th>${al?"Período / turma":"Setor"}</th><th>Situação</th></tr></thead><tbody>
-      ${lista.length ? lista.map(m=>`<tr class="click" data-edit-m="${esc(m.matricula)}"><td class="mono">${esc(m.matricula)}</td><td><b>${esc(m.nome)}</b></td>${al?"":`<td>${esc(FUNCOES[m.tipo]||m.tipo)}${ADMINS.includes(m.tipo)?' <span class="pill" style="background:var(--accent-soft);color:var(--accent)">admin</span>':""}</td>`}<td>${esc(m.periodo||"—")}</td><td>${m.ativo===false?'<span class="pill e-provisoria">Inativo</span>': vencido(m)?'<span class="pill e-provisoria">Código vencido</span>' : m.temporario?`<span class="pill e-recepcao">Temporário até ${esc(kShort(m.validade).slice(0,5))}</span>`:'<span class="pill e-alta">Ativo</span>'}</td></tr>`).join("")
-        : `<tr><td colspan="${al?4:5}"><div class="empty">${S.membros.some(m => al ? m.tipo==="aluno" : m.tipo!=="aluno") ? "Ninguém encontrado com esse filtro." : al ? "Nenhum aluno cadastrado ainda." : "Nenhum colaborador cadastrado ainda."}</div></td></tr>`}
+      <div class="tbl-wrap"><table><thead><tr><th>${al?"Matrícula / código":"Matrícula"}</th><th>Nome completo</th>${al?"":"<th>Função</th>"}<th>${al?"Período / turma":"Setor"}</th><th>Situação</th><th>Senha</th></tr></thead><tbody>
+      ${lista.length ? lista.map(m=>`<tr class="click" data-edit-m="${esc(m.matricula)}"><td class="mono">${esc(m.matricula)}</td><td><b>${esc(m.nome)}</b></td>${al?"":`<td>${esc(FUNCOES[m.tipo]||m.tipo)}${ADMINS.includes(m.tipo)?' <span class="pill" style="background:var(--accent-soft);color:var(--accent)">admin</span>':""}</td>`}<td>${esc(m.periodo||"—")}</td><td>${m.ativo===false?'<span class="pill e-provisoria">Inativo</span>': vencido(m)?'<span class="pill e-provisoria">Código vencido</span>' : m.temporario?`<span class="pill e-recepcao">Temporário até ${esc(kShort(m.validade).slice(0,5))}</span>`:'<span class="pill e-alta">Ativo</span>'}</td><td>${senhaTag(m)}</td></tr>`).join("")
+        : `<tr><td colspan="${al?5:6}"><div class="empty">${S.membros.some(m => al ? m.tipo==="aluno" : m.tipo!=="aluno") ? "Ninguém encontrado com esse filtro." : al ? "Nenhum aluno cadastrado ainda." : "Nenhum colaborador cadastrado ainda."}</div></td></tr>`}
       </tbody></table></div></section>`;
   }
   const q = norm(S.pacBusca), qd = digits(S.pacBusca);
   const lista = S.pacientes.filter(p => !q || norm(p.nome).includes(q) || String(p.prontuario||"").includes(S.pacBusca.trim()) || (qd.length>=3 && (digits(p.cpf).includes(qd) || digits(p.telefone).includes(qd)))).sort(porNome);
-  return `<div class="head"><div><h1>Identificação</h1><p>Pacientes cadastrados pela recepção. O aluno é definido a cada atendimento, na entrada da clínica.</p></div>
+  return `<div class="head"><div><h1>Identificação</h1><p>Cadastro de pacientes, feito pela recepção. O aluno é definido a cada atendimento, na entrada da clínica.</p></div>
     ${isRecep() && S.canWrite ? `<button class="btn primary" type="button" data-act="novo-pac">+ Cadastrar paciente</button>` : ""}</div>
   ${sub}
   ${!isRecep() ? `<div class="banner">Somente a recepção cadastra e altera dados de pacientes.</div>` : ""}
@@ -650,12 +736,13 @@ function visitaHTML(a, opts = {}){
     </div></article>`;
 }
 function semAtual(k = keyBR()){ return semestresLista(+k.slice(0,4)).find(s => k >= s.inicio && k <= s.fim); }
-function vProducao(){
+function vProducao(self){
   if (!S.prodIni) { const s = semAtual(); S.prodIni = s ? s.inicio : keyBR().slice(0,4)+"-01-01"; S.prodFim = s ? s.fim : keyBR(); }
   const inRange = (a) => (!S.prodIni || a.dataBR >= S.prodIni) && (!S.prodFim || a.dataBR <= S.prodFim);
   const lista = S.atend.filter(inRange);
   const q = norm(S.prodBusca);
-  const als = S.membros.filter(m => m.tipo === "aluno").map(m => {
+  if (self) S.progAluno = S.meMat;
+  const als = S.membros.filter(m => m.tipo === "aluno" && (!self || m.matricula === S.meMat)).map(m => {
     const op = lista.filter(a => a.alunoMatricula === m.matricula), aux = lista.filter(a => a.auxiliarMatricula === m.matricula), circ = lista.filter(a => a.circulanteMatricula === m.matricula);
     return {m, op, aux, circ, procs: op.reduce((n,a)=>n+(a.procedimentos?.length||0),0)};
   }).filter(x => !q || norm(x.m.nome).includes(q) || norm(x.m.matricula).includes(q)).sort((a,b)=>b.op.length-a.op.length || porNome(a.m,b.m));
@@ -683,8 +770,10 @@ function vProducao(){
       <div class="stack"><h3 class="h3" style="margin:0">Atendimentos no período (${todos.length}) · ${concl} com procedimento finalizado</h3>${todos.length ? todos.map(a=>visitaHTML(a,{comPaciente:true})).join("") : `<div class="empty">Sem atendimentos no período.</div>`}</div>
     </div>`;
   }
-  return `<section class="panel"><div class="panel-h"><div class="row"><span style="font-weight:700;font-size:13px">Período</span>${presets.map(([k,n,i,f])=>`<button class="btn sm" type="button" data-prod="${i||""}|${f||""}" ${S.prodIni===(i||"")&&S.prodFim===(f||"")?'style="border-color:var(--accent);color:var(--accent)"':""}>${n}</button>`).join("")}</div>
-    <div class="row"><input type="date" id="prod-ini" value="${esc(S.prodIni)}" style="width:auto" aria-label="De"><span>até</span><input type="date" id="prod-fim" value="${esc(S.prodFim)}" style="width:auto" aria-label="Até"></div></div></section>
+  const periodoHTML = `<section class="panel"><div class="panel-h"><div class="row"><span style="font-weight:700;font-size:13px">Período</span>${presets.map(([k,n,i,f])=>`<button class="btn sm" type="button" data-prod="${i||""}|${f||""}" ${S.prodIni===(i||"")&&S.prodFim===(f||"")?'style="border-color:var(--accent);color:var(--accent)"':""}>${n}</button>`).join("")}</div>
+    <div class="row"><input type="date" id="prod-ini" value="${esc(S.prodIni)}" style="width:auto" aria-label="De"><span>até</span><input type="date" id="prod-fim" value="${esc(S.prodFim)}" style="width:auto" aria-label="Até"></div></div></section>`;
+  if (self) return `<div class="head"><div><h1>Minha produção</h1><p>Seus atendimentos, pacientes e procedimentos no período, como operador, auxiliar ou circulante.</p></div></div>` + periodoHTML + `<section class="panel">${det}</section>`;
+  return periodoHTML + `
   <div class="split">
     <section class="panel"><div class="panel-h"><input type="search" id="prod-busca" placeholder="Buscar aluno por nome ou matrícula" value="${esc(S.prodBusca)}" aria-label="Buscar aluno"></div>
       <div class="list">${als.length ? als.map(y=>`<div class="li" role="button" tabindex="0" data-asel="${esc(y.m.matricula)}" aria-selected="${y.m.matricula===S.progAluno}"><div class="l"><b>${esc(y.m.nome)}</b><span class="s">${esc(y.m.matricula)}${y.m.temporario?" · temporário":""} · ${y.procs} procedimento(s)</span></div><span class="pill e-clinica" title="Atendimentos como operador">${y.op.length}</span></div>`).join("") : `<div class="empty">Nenhum aluno encontrado.</div>`}</div></section>
@@ -741,85 +830,165 @@ function semestresLista(y = +S.ref.slice(0,4)){
   if (S.semestres?.length) return S.semestres;
   return [y-1,y,y+1].flatMap(a => [{nome:a+".1", inicio:a+"-01-01", fim:a+"-06-30"},{nome:a+".2", inicio:a+"-07-01", fim:a+"-12-31"}]);
 }
-function periodo(){
-  const k = S.ref, [y,m] = k.split("-").map(Number);
-  if (S.per === "dia") return {ini:k, fim:k, rot:kDate(k,{weekday:"long",day:"numeric",month:"long",year:"numeric"}), g:"hora"};
-  if (S.per === "semana") { const dow = (kParse(k).getUTCDay()+6)%7, ini = kAdd(k,-dow), fim = kAdd(ini,6); return {ini, fim, rot:`Semana de ${kShort(ini).slice(0,5)} a ${kShort(fim)}`, g:"dia"}; }
-  if (S.per === "mes") { const ini = `${y}-${String(m).padStart(2,"0")}-01`, fim = kAdd(kFmt(new Date(Date.UTC(y, m, 1, 12))), -1); return {ini, fim, rot:kDate(k,{month:"long",year:"numeric"}), g:"dia"}; }
-  if (S.per === "semestre") { const s = semestresLista().find(s => k >= s.inicio && k <= s.fim) || {nome:"fora do calendário", inicio:k, fim:k}; return {ini:s.inicio, fim:s.fim, rot:`Semestre letivo ${s.nome} (${kShort(s.inicio)} a ${kShort(s.fim)})`, g:"mes"}; }
-  return {ini:`${y}-01-01`, fim:`${y}-12-31`, rot:`Ano de ${y}`, g:"mes"};
+function periodo(ref = S.ref){
+  const k = ref, [y,m] = k.split("-").map(Number);
+  if (S.per === "dia") return {ini:k, fim:k, rot:kDate(k,{weekday:"long",day:"numeric",month:"long",year:"numeric"}), g:"hora", ant:"o dia anterior"};
+  if (S.per === "semana") { const dow = (kParse(k).getUTCDay()+6)%7, ini = kAdd(k,-dow), fim = kAdd(ini,6); return {ini, fim, rot:`Semana de ${kShort(ini).slice(0,5)} a ${kShort(fim)}`, g:"dia", ant:"a semana anterior"}; }
+  if (S.per === "mes") { const ini = `${y}-${String(m).padStart(2,"0")}-01`, fim = kAdd(kFmt(new Date(Date.UTC(y, m, 1, 12))), -1); return {ini, fim, rot:kDate(k,{month:"long",year:"numeric"}), g:"dia", ant:"o mês anterior"}; }
+  if (S.per === "semestre") { const s = semestresLista(+k.slice(0,4)).find(s => k >= s.inicio && k <= s.fim) || {nome:"fora do calendário", inicio:k, fim:k}; return {ini:s.inicio, fim:s.fim, rot:`Semestre letivo ${s.nome} (${kShort(s.inicio)} a ${kShort(s.fim)})`, g:"mes", ant:"o semestre anterior"}; }
+  return {ini:`${y}-01-01`, fim:`${y}-12-31`, rot:`Ano de ${y}`, g:"mes", ant:"o ano anterior"};
 }
-function mover(dir){
-  const k = S.ref, [y,m] = k.split("-").map(Number);
-  if (S.per === "dia") S.ref = kAdd(k, dir);
-  else if (S.per === "semana") S.ref = kAdd(k, 7*dir);
-  else if (S.per === "mes") S.ref = kFmt(new Date(Date.UTC(y, m-1+dir, 1, 12)));
-  else if (S.per === "ano") S.ref = `${y+dir}-01-01`;
-  else { const l = [...semestresLista()].sort((a,b)=>a.inicio.localeCompare(b.inicio)); const p = periodo(); const i = l.findIndex(s=>s.inicio===p.ini); const n = l[i+dir]; S.ref = n ? n.inicio : kAdd(dir>0 ? p.fim : p.ini, dir); }
-  render();
+function desloca(ref, dir){
+  const [y,m] = ref.split("-").map(Number);
+  if (S.per === "dia") return kAdd(ref, dir);
+  if (S.per === "semana") return kAdd(ref, 7*dir);
+  if (S.per === "mes") return kFmt(new Date(Date.UTC(y, m-1+dir, 1, 12)));
+  if (S.per === "ano") return `${y+dir}-01-01`;
+  const l = [...semestresLista(y)].sort((a,b)=>a.inicio.localeCompare(b.inicio)); const p = periodo(ref); const i = l.findIndex(s=>s.inicio===p.ini); const n = l[i+dir];
+  return n ? n.inicio : kAdd(dir > 0 ? p.fim : p.ini, dir);
 }
-function colChart(bins){
-  const W = 640, H = 230, pl = 34, pr = 8, pt = 12, pb = 28;
-  const max = Math.max(1, ...bins.map(b=>b.v));
-  const step = max <= 5 ? 1 : max <= 10 ? 2 : max <= 25 ? 5 : max <= 50 ? 10 : Math.ceil(max/50)*10;
-  const top = Math.ceil(max/step)*step;
+function mover(dir){ S.ref = desloca(S.ref, dir); render(); }
+const media = (l) => l.length ? l.reduce((x,y)=>x+y,0)/l.length : null;
+function estat(ini, fim){
+  const list = S.atend.filter(a => a.dataBR >= ini && a.dataBR <= fim);
+  const comProc = list.filter(a => ts(a,"procedimento"));
+  const esp = list.filter(a => ts(a,"clinica")).map(a => mins(ts(a,"recepcao"), ts(a,"clinica")));
+  const cl = comProc.filter(a => ts(a,"clinica")).map(a => mins(ts(a,"clinica"), ts(a,"procedimento")));
+  return {list, comProc, esp, pac:new Set(comProc.map(a=>a.pacienteId)).size, espM:media(esp), espMax:esp.length ? Math.max(...esp) : null, clM:media(cl),
+    altas:list.filter(a=>a.etapa==="alta").length, prov:list.filter(a=>a.etapa==="provisoria").length, andamento:list.filter(a=>!fechado(a)).length};
+}
+function escala(max){ const step = max <= 5 ? 1 : max <= 10 ? 2 : max <= 25 ? 5 : max <= 50 ? 10 : max <= 100 ? 20 : Math.ceil(max/50)*10; return {step, top: Math.max(step, Math.ceil(max/step)*step)}; }
+function colChart(bins, unidade = "check-in(s)", W = 640){
+  const H = W < 500 ? 200 : 230, pl = 30, pr = 6, pt = 12, pb = 26;
+  const {step, top} = escala(Math.max(1, ...bins.map(b=>b.v)));
   const y = (v) => pt + (H-pt-pb) * (1 - v/top);
   const bw = (W-pl-pr)/bins.length, w = Math.max(2, Math.min(28, bw*0.62));
-  const every = Math.ceil(bins.length / 12);
+  const every = Math.ceil(bins.length / (W < 500 ? 8 : 12));
   let g = "";
   for (let v = 0; v <= top; v += step) g += `<line class="gl" x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}"/><text x="${pl-6}" y="${y(v)+4}" text-anchor="end">${v}</text>`;
   bins.forEach((b,i) => {
     const cx = pl + bw*i + bw/2, h = y(0)-y(b.v), x = cx - w/2;
-    if (b.v > 0) { const r = Math.min(4, w/2, h); g += `<g data-tip="${esc(b.tip)}: ${b.v} check-in(s)"><rect class="hit" x="${pl+bw*i}" y="${pt}" width="${bw}" height="${H-pt-pb}"/><path class="bar" d="M${x},${y(0)} V${y(b.v)+r} Q${x},${y(b.v)} ${x+r},${y(b.v)} H${x+w-r} Q${x+w},${y(b.v)} ${x+w},${y(b.v)+r} V${y(0)} Z"/></g>`; }
-    else g += `<g data-tip="${esc(b.tip)}: nenhum check-in"><rect class="hit" x="${pl+bw*i}" y="${pt}" width="${bw}" height="${H-pt-pb}"/></g>`;
+    const hit = `<rect class="hit" x="${pl+bw*i}" y="${pt}" width="${bw}" height="${H-pt-pb}"/>`;
+    if (b.v > 0) { const r = Math.min(4, w/2, h); g += `<g data-tip="${esc(b.tip)}: ${b.v} ${unidade}">${hit}<path class="bar" d="M${x},${y(0)} V${y(b.v)+r} Q${x},${y(b.v)} ${x+r},${y(b.v)} H${x+w-r} Q${x+w},${y(b.v)} ${x+w},${y(b.v)+r} V${y(0)} Z"/></g>`; }
+    else g += `<g data-tip="${esc(b.tip)}: nenhum">${hit}</g>`;
     if (i % every === 0) g += `<text x="${cx}" y="${H-9}" text-anchor="middle">${esc(b.l)}</text>`;
   });
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Check-ins no período">${g}</svg>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Gráfico de colunas">${g}</svg>`;
+}
+function lineChart(pts){
+  const W = 640, H = 230, pl = 44, pr = 12, pt = 14, pb = 28;
+  const vals = pts.filter(p => p.v != null).map(p => p.v);
+  if (!vals.length) return `<div class="empty">Sem tempos registrados neste período.</div>`;
+  const {step, top} = escala(Math.max(10, ...vals));
+  const y = (v) => pt + (H-pt-pb) * (1 - v/top);
+  const bw = (W-pl-pr)/pts.length, x = (i) => pl + bw*i + bw/2;
+  const every = Math.ceil(pts.length / 12);
+  let g = "", seg = [], paths = [];
+  for (let v = 0; v <= top; v += step) g += `<line class="gl" x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}"/><text x="${pl-6}" y="${y(v)+4}" text-anchor="end">${v} min</text>`;
+  pts.forEach((p,i) => { if (p.v == null) { if (seg.length) paths.push(seg); seg = []; } else seg.push([x(i), y(p.v)]); }); if (seg.length) paths.push(seg);
+  for (const sg of paths) {
+    if (sg.length > 1) g += `<path class="area" d="M${sg[0][0]},${y(0)} ${sg.map(q=>`L${q[0]},${q[1]}`).join(" ")} L${sg[sg.length-1][0]},${y(0)} Z"/><path class="line" d="${sg.map((q,k)=>(k?"L":"M")+q[0]+","+q[1]).join(" ")}"/>`;
+  }
+  const last = pts.map((p,i)=>[p,i]).filter(([p])=>p.v!=null).pop();
+  pts.forEach((p,i) => {
+    g += `<g data-tip="${esc(p.tip)}: ${p.v == null ? "sem registros" : "espera média de " + durTxt(p.v)}"><rect class="hit" x="${pl+bw*i}" y="${pt}" width="${bw}" height="${H-pt-pb}"/>${p.v != null ? `<circle class="dot${last && last[1]===i ? " end" : ""}" cx="${x(i)}" cy="${y(p.v)}" r="${last && last[1]===i ? 5 : 3.5}"/>` : ""}</g>`;
+    if (i % every === 0) g += `<text x="${x(i)}" y="${H-9}" text-anchor="middle">${esc(p.l)}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Gráfico de linha do tempo médio de espera">${g}</svg>`;
+}
+function delta(atual, ant, menorMelhor){
+  if (atual == null || ant == null || ant === 0) return `<small class="dl neutro">sem base de comparação</small>`;
+  const pc = Math.round((atual - ant) / ant * 100);
+  if (pc === 0) return `<small class="dl neutro">igual ao período anterior</small>`;
+  const bom = menorMelhor ? pc < 0 : pc > 0;
+  return `<small class="dl ${bom ? "bom" : "ruim"}">${pc > 0 ? "▲" : "▼"} ${Math.abs(pc)}% vs. período anterior</small>`;
+}
+const TABELAS = {};
+function tabelaHTML(id, titulo, cols, linhas, opts = {}){
+  TABELAS[id] = {titulo, cols, linhas};
+  const sortable = opts.sort;
+  return `<section class="panel"><div class="panel-h"><h2>${esc(titulo)}</h2>${linhas.length ? `<button class="btn sm" type="button" data-act="csv" data-tabela="${id}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Baixar CSV</button>` : ""}</div>
+    <div class="tbl-wrap"><table><thead><tr>${cols.map(c => `<th${c.num ? ' style="text-align:right"' : ""}>${sortable && c.k ? `<button type="button" class="th-sort" data-sort="${c.k}" aria-label="Ordenar por ${esc(c.t)}">${esc(c.t)}${S.sortAl.k === c.k ? (S.sortAl.dir < 0 ? " ↓" : " ↑") : ""}</button>` : esc(c.t)}</th>`).join("")}</tr></thead><tbody>
+    ${linhas.length ? linhas.map(l => `<tr${opts.click ? ` class="click" data-prodaluno="${esc(l._mat)}"` : ""}>${cols.map((c,i) => `<td class="${c.num ? "num" : ""}${c.mono ? " mono" : ""}">${i === 0 ? `<b>${esc(l[i])}</b>` : esc(c.fmt ? c.fmt(l[i]) : l[i])}</td>`).join("")}</tr>`).join("") : `<tr><td colspan="${cols.length}"><div class="empty">Sem dados neste período.</div></td></tr>`}
+    </tbody></table></div></section>`;
+}
+async function baixarCSV(id){
+  const t = TABELAS[id]; if (!t) return;
+  const q = (x) => { const s = String(x ?? ""); return /[;"\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
+  const csv = "﻿" + [t.cols.map(c => q(c.t)).join(";"), ...t.linhas.map(l => t.cols.map((c,i) => q(c.fmt ? c.fmt(l[i]) : l[i])).join(";"))].join("\r\n");
+  const nome = `cora-${norm(t.titulo).replace(/[^a-z0-9]+/g,"-")}-${periodo().ini}.csv`;
+  if (S.dl) { try { await S.dl.save({filename:nome, data:csv}); } catch (e) { if (e?.code !== "declined") toast("Não foi possível baixar o arquivo aqui."); } return; }
+  if (S.mode === "local") { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv"})); a.download = nome; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); return; }
+  toast("O download de arquivos não está disponível nesta visualização.");
 }
 function vMetricas(){
-  const P = periodo();
-  const list = S.atend.filter(a => a.dataBR >= P.ini && a.dataBR <= P.fim);
-  const comProc = list.filter(a => ts(a,"procedimento"));
-  const pacAt = new Set(comProc.map(a=>a.pacienteId)).size;
-  const esp = list.filter(a => ts(a,"clinica")).map(a => mins(ts(a,"recepcao"), ts(a,"clinica")));
-  const espM = esp.length ? esp.reduce((x,y)=>x+y,0)/esp.length : null;
-  const espMax = esp.length ? Math.max(...esp) : null;
-  const cl = comProc.filter(a=>ts(a,"clinica")).map(a => mins(ts(a,"clinica"), ts(a,"procedimento")));
-  const clM = cl.length ? cl.reduce((x,y)=>x+y,0)/cl.length : null;
-  const altas = list.filter(a=>a.etapa==="alta").length, prov = list.filter(a=>a.etapa==="provisoria").length;
-  const procC = {}; comProc.forEach(a => (a.procedimentos||[]).forEach(x => procC[x] = (procC[x]||0)+1));
-  const top = Object.entries(procC).sort((a,b)=>b[1]-a[1]);
-  const totProc = top.reduce((n,x)=>n+x[1],0);
-  const porAluno = {}; comProc.forEach(a => { const k = a.alunoMatricula||"—"; porAluno[k] = porAluno[k] || {n:0, pac:new Set(), proc:0}; porAluno[k].n++; porAluno[k].pac.add(a.pacienteId); porAluno[k].proc += a.procedimentos?.length||0; });
-  let bins = [];
-  if (P.g === "hora") { for (let h = 7; h <= 21; h++) bins.push({l:h+"h", tip:`${h}h–${h+1}h`, v:list.filter(a => +fHoraNum.format(new Date(ts(a,"recepcao"))) === h).length}); }
-  else if (P.g === "dia") { for (let k = P.ini; k <= P.fim; k = kAdd(k,1)) bins.push({l: S.per==="semana" ? kDate(k,{weekday:"short"}).replace(".","") : String(+k.slice(8)), tip:kDate(k,{weekday:"short",day:"2-digit",month:"2-digit"}), v:list.filter(a=>a.dataBR===k).length}); }
-  else { let k = P.ini.slice(0,7)+"-01"; while (k <= P.fim) { const mk = k.slice(0,7); bins.push({l:kDate(k,{month:"short"}).replace(".",""), tip:kDate(k,{month:"long",year:"numeric"}), v:list.filter(a=>a.dataBR.slice(0,7)===mk).length}); const [yy,mm] = k.split("-").map(Number); k = kFmt(new Date(Date.UTC(yy, mm, 1, 12))); } }
-  const segP = `<div class="seg" role="group">${[["dia","Dia"],["semana","Semana"],["mes","Mês"],["semestre","Semestre letivo"],["ano","Ano"]].map(([k,n])=>`<button type="button" data-per="${k}" aria-pressed="${S.per===k}">${n}</button>`).join("")}</div>`;
-  const maxP = top.length ? top[0][1] : 1;
-  return `<div class="head"><div><h1>Métricas</h1><p>Visível apenas para professores, responsável técnico e recepção.</p></div>${segP}</div>
+  const P = periodo(), A = periodo(desloca(S.ref, -1));
+  const E = estat(P.ini, P.fim), Ea = estat(A.ini, A.fim);
+  const list = E.list, comProc = E.comProc;
+  // séries
+  let bins = [], linha = [];
+  const espDe = (l) => media(l.filter(a => ts(a,"clinica")).map(a => mins(ts(a,"recepcao"), ts(a,"clinica"))));
+  if (P.g === "hora") { for (let h = 7; h <= 21; h++) { const l = list.filter(a => +fHoraNum.format(new Date(ts(a,"recepcao"))) === h); bins.push({l:h+"h", tip:`${h}h–${h+1}h`, v:l.length}); linha.push({l:h+"h", tip:`${h}h–${h+1}h`, v:espDe(l)}); } }
+  else if (P.g === "dia") { for (let k = P.ini; k <= P.fim; k = kAdd(k,1)) { const l = list.filter(a=>a.dataBR===k); const lb = S.per==="semana" ? kDate(k,{weekday:"short"}).replace(".","") : String(+k.slice(8)); const tp = kDate(k,{weekday:"short",day:"2-digit",month:"2-digit"}); bins.push({l:lb, tip:tp, v:l.length}); linha.push({l:lb, tip:tp, v:espDe(l)}); } }
+  else { let k = P.ini.slice(0,7)+"-01"; while (k <= P.fim) { const mk = k.slice(0,7); const l = list.filter(a=>a.dataBR.slice(0,7)===mk); const lb = kDate(k,{month:"short"}).replace(".",""), tp = kDate(k,{month:"long",year:"numeric"}); bins.push({l:lb, tip:tp, v:l.length}); linha.push({l:lb, tip:tp, v:espDe(l)}); const [yy,mm] = k.split("-").map(Number); k = kFmt(new Date(Date.UTC(yy, mm, 1, 12))); } }
+  const porHora = []; for (let h = 7; h <= 21; h++) porHora.push({l:h+"h", tip:`Chegadas entre ${h}h e ${h+1}h`, v:list.filter(a => +fHoraNum.format(new Date(ts(a,"recepcao"))) === h).length});
+  const dias = ["seg","ter","qua","qui","sex","sáb","dom"], porDia = dias.map((d,i) => ({l:d, tip:d, v:list.filter(a => (kParse(a.dataBR).getUTCDay()+6)%7 === i).length}));
+  // procedimentos
+  const procC = {}, procP = {}; comProc.forEach(a => (a.procedimentos||[]).forEach(x => { procC[x] = (procC[x]||0)+1; (procP[x] = procP[x] || new Set()).add(a.pacienteId); }));
+  const top = Object.entries(procC).sort((a,b)=>b[1]-a[1]), totProc = top.reduce((n,x)=>n+x[1],0), maxP = top[0]?.[1] || 1;
+  // desfecho
+  const tot = E.altas + E.prov + E.andamento;
+  const fatias = [["Alta","alta",E.altas],["Liberação provisória","prov",E.prov],["Em andamento","and",E.andamento]];
+  // alunos
+  const al = {};
+  const reg = (mat) => al[mat] = al[mat] || {op:0, aux:0, circ:0, pac:new Set(), proc:0, altas:0, cl:[]};
+  list.forEach(a => {
+    if (a.alunoMatricula) { const r = reg(a.alunoMatricula); r.op++; r.pac.add(a.pacienteId); r.proc += a.procedimentos?.length || 0; if (a.etapa === "alta") r.altas++; if (ts(a,"clinica") && ts(a,"procedimento")) r.cl.push(mins(ts(a,"clinica"), ts(a,"procedimento"))); }
+    if (a.auxiliarMatricula) reg(a.auxiliarMatricula).aux++;
+    if (a.circulanteMatricula) reg(a.circulanteMatricula).circ++;
+  });
+  const sk = S.sortAl.k, ord = {op:1, aux:3, circ:4, pac:5, proc:6, altas:7, cl:8};
+  let linhasAl = Object.entries(al).map(([mat,r]) => Object.assign([nomeM(mat), mat, r.op, r.aux, r.circ, r.pac.size, r.proc, r.altas, media(r.cl)], {_mat:mat}));
+  linhasAl.sort((a,b) => { const i = ord[sk] ?? 2; const x = a[i] ?? -1, y = b[i] ?? -1; return (typeof x === "string" ? x.localeCompare(y,"pt-BR") : x - y) * S.sortAl.dir; });
+  const colsAl = [{t:"Aluno(a)", k:"op_n"},{t:"Matrícula", mono:true},{t:"Operador", num:true, k:"op"},{t:"Auxiliar", num:true, k:"aux"},{t:"Circulante", num:true, k:"circ"},{t:"Pacientes", num:true, k:"pac"},{t:"Procedimentos", num:true, k:"proc"},{t:"Altas", num:true, k:"altas"},{t:"Tempo médio em clínica", num:true, k:"cl", fmt:durTxt}];
+  colsAl[0].k = "nome"; ord.nome = 0;
+  if (sk === "nome") linhasAl.sort((a,b) => a[0].localeCompare(b[0],"pt-BR") * S.sortAl.dir);
+  const sup = {}; comProc.forEach(a => { if (!a.professorMatricula) return; const r = sup[a.professorMatricula] = sup[a.professorMatricula] || {n:0, proc:0, al:new Set()}; r.n++; r.proc += a.procedimentos?.length || 0; equipe(a).forEach(x => r.al.add(x)); });
+  const linhasSup = Object.entries(sup).sort((a,b)=>b[1].n-a[1].n).map(([mat,r]) => [nomeM(mat), mat, r.n, r.proc, r.al.size]);
+  const linhasProc = top.map(([n,v]) => [n, v, totProc ? Math.round(v/totProc*100) + "%" : "—", procP[n].size]);
+  const segP = `<div class="seg" role="group" aria-label="Período">${[["dia","Dia"],["semana","Semana"],["mes","Mês"],["semestre","Semestre letivo"],["ano","Ano"]].map(([k,n])=>`<button type="button" data-per="${k}" aria-pressed="${S.per===k}">${n}</button>`).join("")}</div>`;
+  const g = P.g === "hora" ? "hora de chegada" : P.g === "dia" ? "dia" : "mês";
+  return `<div class="head"><div><h1>Métricas</h1><p>Painel de indicadores da clínica. Passe o mouse nos gráficos para ver os valores.</p></div>${segP}</div>
   <div class="row" style="justify-content:space-between">
     <div class="row"><button class="btn sm" type="button" data-mv="-1" aria-label="Período anterior">‹</button><button class="btn sm" type="button" data-mv="1" aria-label="Próximo período">›</button><input type="date" id="ref" value="${S.ref}" style="width:auto" aria-label="Data de referência"><b style="font-family:var(--f-display);font-size:16px">${esc(P.rot.charAt(0).toUpperCase()+P.rot.slice(1))}</b></div>
-    ${S.per==="semestre" ? `<button class="btn sm" type="button" data-act="semestres">Configurar semestres letivos</button>` : ""}
+    <span class="hint" style="color:var(--muted);font-size:12.5px">Comparação com ${esc(P.ant)}</span>
   </div>
   <div class="kpis">
-    <div class="kpi hl"><span>Pacientes atendidos</span><b>${pacAt}</b><small>com procedimento finalizado</small></div>
-    <div class="kpi"><span>Check-ins</span><b>${list.length}</b><small>${comProc.length} atendimento(s) concluído(s)</small></div>
-    <div class="kpi hl"><span>Espera média</span><b>${durTxt(espM)}</b><small>recepção → clínica${espMax!=null?` · máx. ${durTxt(espMax)}`:""}</small></div>
-    <div class="kpi"><span>Tempo em clínica</span><b>${durTxt(clM)}</b><small>entrada → procedimento</small></div>
-    <div class="kpi"><span>Altas</span><b>${altas}</b><small>tratamentos concluídos</small></div>
-    <div class="kpi"><span>Liberações provisórias</span><b>${prov}</b><small>pacientes que retornam</small></div>
+    <div class="kpi hl"><span>Pacientes atendidos</span><b>${E.pac}</b>${delta(E.pac, Ea.pac)}</div>
+    <div class="kpi"><span>Check-ins</span><b>${list.length}</b>${delta(list.length, Ea.list.length)}</div>
+    <div class="kpi"><span>Procedimentos</span><b>${totProc}</b>${delta(totProc, Ea.comProc.reduce((n,a)=>n+(a.procedimentos?.length||0),0))}</div>
+    <div class="kpi"><span>Espera média</span><b>${durTxt(E.espM)}</b>${delta(E.espM, Ea.espM, true)}</div>
+    <div class="kpi"><span>Tempo em clínica</span><b>${durTxt(E.clM)}</b><small>entrada → procedimento</small></div>
+    <div class="kpi"><span>Altas</span><b>${E.altas}</b>${delta(E.altas, Ea.altas)}</div>
   </div>
-  <div class="mgrid">
-    <section class="panel"><div class="panel-h"><h2>Check-ins por ${P.g==="hora"?"hora de chegada":P.g==="dia"?"dia":"mês"}</h2></div><div class="panel-b chart">${list.length ? colChart(bins) : `<div class="empty">Nenhum check-in neste período.</div>`}</div></section>
-    <section class="panel"><div class="panel-h"><h2>Procedimentos mais realizados</h2><span style="color:var(--muted);font-size:13px">${totProc} no total</span></div><div class="panel-b">
+  <div class="dash">
+    <section class="panel span-2"><div class="panel-h"><h2>Check-ins por ${g}</h2><span class="hint">${list.length} no período</span></div><div class="panel-b chart">${list.length ? colChart(bins) : `<div class="empty">Nenhum check-in neste período.</div>`}</div></section>
+    <section class="panel"><div class="panel-h"><h2>Desfecho dos atendimentos</h2></div><div class="panel-b">
+      ${tot ? `<div class="sbar" role="img" aria-label="Desfecho dos atendimentos">${fatias.filter(f=>f[2]).map(([n,k,v]) => `<span class="d-${k}" style="flex:${v}" data-tip="${esc(n)}: ${v} (${Math.round(v/tot*100)}%)"></span>`).join("")}</div>
+      <ul class="legend">${fatias.map(([n,k,v]) => `<li><i class="d-${k}"></i><span>${esc(n)}</span><b>${v}</b><em>${tot ? Math.round(v/tot*100) : 0}%</em></li>`).join("")}</ul>` : `<div class="empty">Sem atendimentos neste período.</div>`}
+    </div></section>
+    <section class="panel span-2"><div class="panel-h"><h2>Tempo médio de espera por ${g}</h2><span class="hint">recepção → entrada na clínica${E.espMax != null ? ` · máximo ${durTxt(E.espMax)}` : ""}</span></div><div class="panel-b chart">${lineChart(linha)}</div></section>
+    <section class="panel"><div class="panel-h"><h2>Chegadas por horário</h2></div><div class="panel-b chart">${list.length ? colChart(porHora, "chegada(s)", 340) : `<div class="empty">Sem chegadas.</div>`}</div></section>
+    <section class="panel span-2"><div class="panel-h"><h2>Procedimentos mais realizados</h2><span class="hint">${totProc} no total</span></div><div class="panel-b">
       ${top.length ? top.slice(0,10).map(([n,v])=>`<div class="hb" data-tip="${esc(n)}: ${v} (${Math.round(v/totProc*100)}%)"><span class="lbl" title="${esc(n)}">${esc(n)}</span><div class="trk"><div class="fill" style="width:${v/maxP*100}%"></div></div><span class="v">${v}</span></div>`).join("") : `<div class="empty">Nenhum procedimento registrado neste período.</div>`}
     </div></section>
+    <section class="panel"><div class="panel-h"><h2>Atendimentos por dia da semana</h2></div><div class="panel-b chart">${list.length ? colChart(porDia, "atendimento(s)", 340) : `<div class="empty">Sem atendimentos.</div>`}</div></section>
   </div>
-  <section class="panel"><div class="panel-h"><h2>Atendimentos por aluno (operador)</h2></div>
-    <div class="tbl-wrap"><table><thead><tr><th>Aluno(a)</th><th>Matrícula</th><th style="text-align:right">Atendimentos</th><th style="text-align:right">Pacientes</th><th style="text-align:right">Procedimentos</th></tr></thead><tbody>
-    ${Object.keys(porAluno).length ? Object.entries(porAluno).sort((a,b)=>b[1].n-a[1].n).map(([mat,v])=>`<tr class="click" data-prodaluno="${esc(mat)}"><td><b>${esc(nomeM(mat))}</b></td><td class="mono">${esc(mat)}</td><td class="num">${v.n}</td><td class="num">${v.pac.size}</td><td class="num">${v.proc}</td></tr>`).join("") : `<tr><td colspan="5"><div class="empty">Sem atendimentos concluídos no período.</div></td></tr>`}
-    </tbody></table></div></section>`;
+  ${tabelaHTML("alunos", "Produção por aluno", colsAl, linhasAl, {sort:true, click:true})}
+  <div class="dash2">
+    ${tabelaHTML("procedimentos", "Procedimentos no período", [{t:"Procedimento"},{t:"Quantidade", num:true},{t:"% do total", num:true},{t:"Pacientes", num:true}], linhasProc)}
+    ${tabelaHTML("supervisao", "Supervisão por professor", [{t:"Professor(a)"},{t:"Matrícula", mono:true},{t:"Atendimentos supervisionados", num:true},{t:"Procedimentos", num:true},{t:"Alunos", num:true}], linhasSup)}
+  </div>`;
 }
 
 /* ===== diálogos ===== */
@@ -863,21 +1032,47 @@ form.addEventListener("input", (e) => {
 });
 const resultados = (l, sel) => l.length ? l.map(p => { const aberto = S.atend.some(a=>a.pacienteId===p.id && !fechado(a)); return `<button type="button" data-pick="${p.id}" aria-pressed="${p.id===sel}" ${aberto?"disabled style=\"opacity:.5\"":""}><span><b>${esc(p.nome)}</b> <span class="mono" style="color:var(--muted)">#${esc(p.prontuario||"—")}</span></span><span style="color:var(--muted);font-size:12.5px">${aberto?"já em atendimento":statusPac(p).t}</span></button>`; }).join("") : `<div class="empty" style="padding:12px">Nenhum paciente encontrado.</div>`;
 
-async function identificar(raw){
-  const mat = matKey(raw);
-  if (!mat) return "Digite sua matrícula ou código temporário.";
-  const m = membro(mat);
-  if (!m) return "Matrícula ou código não encontrado. Procure a recepção para fazer seu cadastro.";
-  if (m.ativo === false) return "Este cadastro está inativo. Procure a recepção.";
-  if (vencido(m)) return `Este código temporário venceu em ${kShort(m.validade)}. Procure a recepção.`;
-  try { if (await B.claimedByOther(mat)) return "Esta matrícula já está vinculada a outra conta. Peça à recepção para liberar o vínculo."; } catch {}
-  const ok = await save(()=>B.link(mat), `Olá, ${m.nome.split(" ")[0]}!`);
-  return ok ? null : "Não foi possível entrar. Tente de novo.";
+async function entrar(rawMat, senha){
+  const mat = matKey(rawMat);
+  if (!mat || !senha) return "Digite a matrícula e a senha.";
+  const m = membro(mat), rec = S.senhas[mat];
+  const ok = m && rec && await confere(senha, rec);
+  if (!ok) return "Matrícula ou senha incorreta.";
+  if (m.ativo === false) return "Este cadastro está inativo. Procure o administrador.";
+  if (vencido(m)) return `Este código temporário venceu em ${kShort(m.validade)}. Procure o administrador.`;
+  S.meMat = mat; S.forcarTroca = !!rec.trocar; ultimoUso = Date.now(); gravarSessao(); render();
+  if (!S.forcarTroca) toast(`Olá, ${m.nome.split(" ")[0]}!`);
+  return null;
 }
-function dlgIdentificar(){
-  open("Identificação do usuário", `
-    ${F("id-mat","Matrícula institucional ou código temporário",`<input type="text" id="id-mat" value="${esc(S.meMat||"")}" autocomplete="off" placeholder="Ex.: 20231045 ou TMP-4821">`,"full","Seus registros ficam assinados com o nome ligado a esta matrícula.")}
-  `, {ok:"Entrar", del:!!S.meMat, delTxt:"Sair", onDel: async () => save(()=>B.link(null), "Você saiu"), onOk: async () => { const e = await identificar(v("id-mat")); return err("id-mat", e); }});
+function mostrarSenha(nome, mat, senha, extra){
+  open("Senha provisória", `<div class="f full" style="text-align:center;gap:10px"><span class="hint">Entregue a ${esc(nome)}</span>
+    <div class="cred"><div><span>Matrícula${mat.startsWith("TMP-") ? " / código" : ""}</span><b>${esc(mat)}</b></div><div><span>Senha provisória</span><b>${esc(senha)}</b></div></div>
+    <span class="hint">Esta senha aparece só agora. No primeiro acesso, a pessoa cria a própria senha.${extra ? " " + esc(extra) : ""}</span>
+    <button class="btn sm" type="button" id="copy-cred" style="align-self:center">Copiar dados de acesso</button></div>`, {ok:false, focus:false});
+  form.querySelector("#copy-cred").onclick = async () => { const t = `CORA\nMatrícula: ${mat}\nSenha provisória: ${senha}`; try { await navigator.clipboard.writeText(t); toast("Dados de acesso copiados"); } catch { toast("Selecione os dados e copie manualmente."); } };
+}
+async function novaProvisoria(m){
+  const pw = senhaProvisoria();
+  if (await save(() => gravarSenha(m.matricula, pw, true))) setTimeout(() => mostrarSenha(m.nome, m.matricula, pw, m.temporario && m.validade ? `Código válido até ${kShort(m.validade)}.` : ""), 40);
+}
+function dlgTrocarSenha(){
+  open("Trocar senha", `
+    ${F("ts-0","Senha atual",`<input type="password" id="ts-0" autocomplete="current-password">`,"full")}
+    ${F("ts-1","Nova senha",`<input type="password" id="ts-1" autocomplete="new-password">`,"", "Pelo menos 8 caracteres, com letras e números.")}
+    ${F("ts-2","Repita a nova senha",`<input type="password" id="ts-2" autocomplete="new-password">`)}
+  `, {ok:"Salvar nova senha", onOk: async () => {
+    if (!err("ts-0", await confere(v("ts-0"), S.senhas[S.meMat]) ? "" : "Senha atual incorreta.")) return false;
+    if (!err("ts-1", senhaFraca(form.querySelector("#ts-1").value))) return false;
+    if (!err("ts-2", form.querySelector("#ts-1").value !== form.querySelector("#ts-2").value ? "As senhas não são iguais." : "")) return false;
+    return save(() => gravarSenha(S.meMat, form.querySelector("#ts-1").value, false), "Senha alterada");
+  }});
+}
+function dlgConta(){
+  const m = me(); if (!m) return;
+  open("Sua conta", `<div class="f full"><b style="font-size:16px">${esc(m.nome)}</b><span class="hint">${esc(m.temporario ? "Acesso temporário" : FUNCOES[m.tipo] || "")} · ${esc(m.matricula)}</span></div>
+    <div class="f full" style="flex-direction:row;gap:8px;flex-wrap:wrap"><button class="btn" type="button" id="ct-senha">Trocar senha</button><button class="btn" type="button" id="ct-sair">Sair</button></div>`, {ok:false, focus:false});
+  form.querySelector("#ct-senha").onclick = () => dlgTrocarSenha();
+  form.querySelector("#ct-sair").onclick = () => { dlg.close(); sair("Você saiu do CORA."); };
 }
 function gerarCodigo(){ let c; do { c = "TMP-" + String(Math.floor(1000 + Math.random()*9000)); } while (membro(c)); return c; }
 function dlgTemp(){
@@ -892,9 +1087,9 @@ function dlgTemp(){
     ok = err("t-val", !v("t-val") ? "Informe a validade." : "") && ok;
     if (!ok) return false;
     const code = gerarCodigo();
-    const r = await save(()=>B.set("membros", code, {matricula:code, nome, tipo:"aluno", periodo:v("t-per"), ativo:true, temporario:true, validade:v("t-val"), criadoEm:new Date().toISOString(), criadoPor:S.meMat||""}));
-    if (r) setTimeout(() => open("Código gerado", `<div class="f full" style="text-align:center;gap:10px"><span class="hint">Entregue este código a ${esc(nome)}</span><div class="code-big">${esc(code)}</div><span class="hint">Válido até ${esc(kShort(v("t-val")) || "")}. O aluno digita o código no lugar da matrícula.</span><button class="btn sm" type="button" id="copy-code" style="align-self:center">Copiar código</button></div>`, {ok:false, focus:false}), 30);
-    setTimeout(() => { const b = $("#copy-code"); if (b) b.onclick = async () => { try { await navigator.clipboard.writeText(code); toast("Código copiado"); } catch { toast("Selecione o código e copie manualmente."); } }; }, 80);
+    const novo = {matricula:code, nome, tipo:"aluno", periodo:v("t-per"), ativo:true, temporario:true, validade:v("t-val"), criadoEm:new Date().toISOString(), criadoPor:S.meMat||""};
+    const r = await save(()=>B.set("membros", code, novo));
+    if (r) await novaProvisoria(novo);
     return r;
   }});
 }
@@ -905,7 +1100,9 @@ async function converter(m, nova){
   for (const a of S.atend.filter(a => equipe(a).includes(m.matricula) || (a.eventos||[]).some(e=>e.por===m.matricula))) {
     await B.patch("atendimentos", a.id, {alunoMatricula:troca(a.alunoMatricula||""), auxiliarMatricula:troca(a.auxiliarMatricula||""), circulanteMatricula:troca(a.circulanteMatricula||""), eventos:(a.eventos||[]).map(e=>({...e, por:troca(e.por)}))});
   }
-  await B.relink(m.matricula, nova);
+  const sen = S.senhas[m.matricula];
+  if (sen) { await B.set("senhas", nova, sen); await B.del("senhas", m.matricula); }
+  if (S.meMat === m.matricula) { S.meMat = nova; gravarSessao(); }
   await B.del("membros", m.matricula);
 }
 function dlgMembro(m, grupo){
@@ -922,10 +1119,11 @@ function dlgMembro(m, grupo){
     ${m.temporario ? F("m-val","Válido até",`<input type="date" id="m-val" value="${esc(m.validade||"")}">`) : ""}
     <div class="f full"><label style="display:flex;gap:8px;align-items:center;font-weight:600;color:var(--fg);font-size:13.5px"><input type="checkbox" id="m-ativo" ${m.ativo===false?"":"checked"}> Cadastro ativo</label></div>
     ${m.temporario ? `<div class="f full box"><label for="m-nova">Converter para matrícula definitiva</label><div class="row" style="flex-wrap:nowrap"><input type="text" id="m-nova" placeholder="Matrícula institucional" autocomplete="off"><button class="btn" type="button" id="m-conv">Converter</button></div><span class="hint">Todo o histórico de atendimentos passa para a nova matrícula.</span><span class="err" id="m-nova-err"></span></div>` : ""}
-    ${edit ? `<div class="f full"><button class="btn sm" type="button" id="m-unlink" style="align-self:flex-start">Liberar vínculo de conta</button><span class="hint">Use quando a pessoa trocar de conta ou não conseguir entrar porque a matrícula já está vinculada.</span></div>` : ""}
+    ${edit ? `<div class="f full box"><span class="lb">Senha de acesso</span><span class="hint">${!S.senhas[m.matricula] ? "Esta pessoa ainda não tem senha." : S.senhas[m.matricula].trocar ? "Senha provisória ainda não trocada." : "Senha pessoal definida."} Gere uma senha provisória para o primeiro acesso ou quando a pessoa esquecer a senha.</span><button class="btn sm" type="button" id="m-senha" style="align-self:flex-start">Gerar senha provisória</button></div>` : `<p class="f full hint" style="margin:0">Ao salvar, o CORA gera uma senha provisória para o primeiro acesso.</p>`}
   `, {del:edit, onDel: async () => {
       if (S.atend.some(a=>equipe(a).includes(m.matricula)||a.professorMatricula===m.matricula)) { toast("Há atendimentos ligados a esta matrícula. Marque o cadastro como inativo em vez de excluir."); return false; }
-      return save(async()=>{ await B.unlinkMat(m.matricula); await B.del("membros", m.matricula); }, "Cadastro excluído"); },
+      if (m.matricula === S.meMat) { toast("Você não pode excluir o próprio cadastro."); return false; }
+      return save(async()=>{ if (S.senhas[m.matricula]) await B.del("senhas", m.matricula); await B.del("membros", m.matricula); }, "Cadastro excluído"); },
     onOk: async () => {
       const mat = matKey(v("m-mat")), nome = v("m-nome").replace(/\s+/g," ");
       let ok = err("m-mat", !mat ? "Informe a matrícula." : (!edit && membro(mat)) ? `Esta matrícula já pertence a ${membro(mat).nome}.` : "");
@@ -933,7 +1131,10 @@ function dlgMembro(m, grupo){
       if (!ok) return false;
       const d = {...strip(m), matricula:mat, nome, tipo: m.temporario ? "aluno" : v("m-tipo"), periodo:v("m-per"), ativo:form.querySelector("#m-ativo").checked, criadoEm:m.criadoEm||new Date().toISOString()};
       if (m.temporario) d.validade = v("m-val");
-      return save(()=>B.set("membros", mat, d), edit ? "Cadastro atualizado" : "Cadastro realizado");
+      if (edit && m.matricula === S.meMat && ADMINS.includes(m.tipo) && !ADMINS.includes(d.tipo)) return err("m-tipo", "Você não pode tirar o próprio acesso de administrador.");
+      const r = await save(()=>B.set("membros", mat, d), edit ? "Cadastro atualizado" : "Cadastro realizado");
+      if (r && !edit) await novaProvisoria(d);
+      return r;
     }});
   const cv = form.querySelector("#m-conv");
   if (cv) cv.onclick = async () => {
@@ -942,8 +1143,8 @@ function dlgMembro(m, grupo){
     cv.disabled = true;
     if (await save(()=>converter(m, nova), `Convertido para a matrícula ${nova}`)) dlg.close(); else cv.disabled = false;
   };
-  const ul = form.querySelector("#m-unlink");
-  if (ul) ul.onclick = async () => { if (await save(()=>B.unlinkMat(m.matricula), "Vínculo liberado. A pessoa pode entrar de novo com a matrícula.")) dlg.close(); };
+  const sb = form.querySelector("#m-senha");
+  if (sb) sb.onclick = () => novaProvisoria(m);
 }
 function proxPront(){ const n = Math.max(0, ...S.pacientes.map(p=>parseInt(p.prontuario,10)||0)); return String(n+1).padStart(4,"0"); }
 function dlgPaciente(p, then){
@@ -1125,8 +1326,29 @@ document.addEventListener("click", async (e) => {
   const act = t.dataset.act;
   if (t.dataset.tab) { S.view = t.dataset.tab; try { localStorage.setItem(LKEY+"-view", S.view); } catch {} render(); window.scrollTo(0,0); }
   else if (t.dataset.go) { S.view = t.dataset.go; if (t.dataset.go==="identificacao") S.idSub = "colaboradores"; render(); }
-  else if (act === "identificar") dlgIdentificar();
-  else if (act === "gate") { t.disabled = true; const m = await identificar($("#gate-mat")?.value || ""); t.disabled = false; const el = $("#gate-err"); if (el) el.textContent = m || ""; }
+  else if (act === "gate") { t.disabled = true; const m = await entrar($("#gate-mat")?.value || "", $("#gate-pw")?.value || ""); t.disabled = false; const el = $("#gate-err"); if (el) el.textContent = m || ""; if (m && $("#gate-pw")) $("#gate-pw").value = ""; }
+  else if (act === "nova-senha") {
+    const a = $("#nv-1").value, b = $("#nv-2").value, el = $("#gate-err");
+    const e2 = senhaFraca(a) || (a !== b ? "As senhas não são iguais." : "");
+    if (e2) { el.textContent = e2; return; }
+    t.disabled = true;
+    if (await save(() => gravarSenha(S.meMat, a, false))) { S.forcarTroca = false; gravarSessao(); render(); toast("Senha criada. Bem-vindo ao CORA!"); } else t.disabled = false;
+  }
+  else if (act === "setup") {
+    const mat = matKey($("#cf-mat").value), nome = $("#cf-nome").value.trim().replace(/\s+/g," "), a = $("#cf-1").value, b = $("#cf-2").value, el = $("#gate-err");
+    const e2 = !mat ? "Informe a matrícula." : nome.split(" ").length < 2 ? "Informe o nome completo." : senhaFraca(a) || (a !== b ? "As senhas não são iguais." : "");
+    if (e2) { el.textContent = e2; return; }
+    t.disabled = true;
+    const atual = membro(mat);
+    const d = {...(atual ? strip(atual) : {}), matricula:mat, nome, tipo: atual && ADMINS.includes(atual.tipo) ? atual.tipo : "admin", ativo:true, criadoEm: atual?.criadoEm || new Date().toISOString()};
+    const ok = await save(async () => { await B.set("membros", mat, d); await gravarSenha(mat, a, false); });
+    t.disabled = false;
+    if (ok) { S.meMat = mat; S.forcarTroca = false; gravarSessao(); render(); toast("Administrador criado. Você já está dentro do CORA."); }
+  }
+  else if (act === "sair") sair("Você saiu do CORA.");
+  else if (act === "trocar-senha") dlgTrocarSenha();
+  else if (act === "conta") dlgConta();
+  else if (act === "csv") baixarCSV(t.dataset.tabela);
   else if (act === "checkin") dlgCheckin();
   else if (act === "novo-pac") { if (isRecep()) dlgPaciente(null, S.view==="checkin" ? (id)=>dlgCheckin(id) : null); }
   else if (act === "novo-aluno") dlgMembro(null, "aluno");
@@ -1138,17 +1360,18 @@ document.addEventListener("click", async (e) => {
 });
 view.addEventListener("keydown", (e) => {
   if (e.key !== "Enter") return;
-  if (e.target.id === "gate-mat") { e.preventDefault(); $("[data-act=gate]")?.click(); }
+  if (["gate-mat","gate-pw","nv-2","cf-2"].includes(e.target.id)) { e.preventDefault(); $("[data-act=gate],[data-act=nova-senha],[data-act=setup]")?.click(); }
   else if (e.target.dataset?.psel) { S.progSel = e.target.dataset.psel; render(); }
   else if (e.target.dataset?.asel) { S.progAluno = e.target.dataset.asel; render(); }
   else if (e.target.dataset?.ver) { const x = S.atend.find(y=>y.id===e.target.dataset.ver); if (x) dlgDetalhe(x); }
 });
 view.addEventListener("click", (e) => {
-  const t = e.target.closest("[data-step],[data-ver],[data-idsub],[data-edit-m],[data-edit-p],[data-prog],[data-psel],[data-asel],[data-pf],[data-openpac],[data-logclear],[data-per],[data-mv],[data-prod],[data-prodaluno]"); if (!t) return;
+  const t = e.target.closest("[data-sort],[data-step],[data-ver],[data-idsub],[data-edit-m],[data-edit-p],[data-prog],[data-psel],[data-asel],[data-pf],[data-openpac],[data-logclear],[data-per],[data-mv],[data-prod],[data-prodaluno]"); if (!t) return;
   const d = t.dataset, a = d.id ? S.atend.find(x=>x.id===d.id) : null;
+  if (d.sort) { S.sortAl = {k:d.sort, dir: S.sortAl.k === d.sort ? -S.sortAl.dir : -1}; render(); return; }
   if (d.step && a) { if (!podeAgir(a)) return toast("Você não tem permissão para esta etapa."); if (d.step==="clinica") dlgEntrada(a); else if (d.step==="procedimento") dlgProcedimento(a); else dlgLiberar(a, d.step); }
   else if (d.ver) { const x = S.atend.find(y=>y.id===d.ver); if (x) dlgDetalhe(x); }
-  else if (d.idsub) { if (S.idSub !== d.idsub) { S.memFiltro = ""; S.memBusca = ""; } S.idSub = d.idsub; render(); }
+  else if (d.idsub && isAdmin()) { if (S.idSub !== d.idsub) { S.memFiltro = ""; S.memBusca = ""; } S.idSub = d.idsub; render(); }
   else if (d.editM) dlgMembro(membro(d.editM));
   else if (d.editP) dlgPaciente(paciente(d.editP));
   else if (d.prog) { S.progMode = d.prog; render(); }
@@ -1185,13 +1408,15 @@ let tT; function toast(m){ const t = $("#toast"); t.textContent = m; t.hidden = 
 
 /* ===== inicialização ===== */
 try { const v0 = localStorage.getItem(LKEY+"-view"); if (v0) S.view = v0; } catch {}
+try { localStorage.removeItem(LKEY+"-me"); } catch {}
 render();
 setInterval(tick, 20000);
 
 (async function boot(){
   const use = window.claude?.use;
   const db = use ? await use("db").catch(()=>null) : null;
-  if (!db) { S.mode = "local"; B = local; local.load(); S.isOwner = !S.membros.length || !S.meMat; render(); return; }
+  const ses = lerSessao();
+  if (!db) { S.mode = "local"; B = local; local.load(); if (ses && membro(ses.mat) && S.senhas[ses.mat]) { S.meMat = ses.mat; S.forcarTroca = !!ses.troca; } render(); return; }
   B = remote(db);
   const user = await use("user").catch(()=>null);
   if (user) {
@@ -1200,8 +1425,15 @@ setInterval(tick, 20000);
     try { const c = await user.can("data.write"); if (c === false) S.canWrite = false; } catch {}
     try { S.uid = await user.id(); } catch {}
   } else { S.isOwner = false; S.canAdmin = false; }
+  if (ses) { S.meMat = ses.mat; S.forcarTroca = !!ses.troca; }
+  use("downloads").then(d => { S.dl = d; }).catch(()=>{});
   render();
-  if (S.uid) db.doc("vinculos/"+S.uid).get().then(s => { if (s.exists) { S.meMat = s.data().matricula || null; render(); } }).catch(()=>{});
+  db.collection("senhas").onSnapshot((snap) => {
+    const m = {}; snap.docs.forEach(d => m[d.id] = d.data()); S.senhas = m;
+    if (!snap.metadata.fromCache) S.senhasOk = true;
+    if (S.meMat && !S.senhas[S.meMat] && S.senhasOk) { S.meMat = null; gravarSessao(); }
+    render();
+  }, () => { S.senhasOk = true; render(); });
   const cols = {membros:"membros", pacientes:"pacientes", atendimentos:"atend"};
   const got = {membros:false, pacientes:false, atendimentos:false};
   const timer = setTimeout(() => { if (S.mode !== "db") { S.mode = "slow"; render(); } }, 10000);

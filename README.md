@@ -28,7 +28,7 @@ O tempo de espera aparece ao vivo e fica vermelho depois de 30 minutos. Alergias
 - **Todos os registros:** linha do tempo geral com filtro por dia.
 
 ### Métricas
-Visível só para professores, responsável técnico e recepção. Períodos: dia, semana, mês, semestre letivo (datas configuráveis) e ano.
+Visível só para administradores. Períodos: dia, semana, mês, semestre letivo (datas configuráveis) e ano.
 - Pacientes atendidos e check-ins
 - Tempo médio de espera (recepção → entrada na clínica)
 - Tempo médio em clínica
@@ -40,13 +40,26 @@ Visível só para professores, responsável técnico e recepção. Períodos: di
 - Lista de procedimentos editável, com lista padrão restaurável.
 - Nome da clínica/instituição exibido abaixo de "CORA".
 
+## Acesso: login e senha
+
+- Cada pessoa entra com a **matrícula** (ou código temporário) e uma **senha**.
+- No primeiro uso, o responsável cria a conta do **primeiro administrador**.
+- Ao cadastrar alguém, o sistema gera uma **senha provisória**. No primeiro acesso, a pessoa cria a própria senha (mínimo de 8 caracteres, com letras e números).
+- Esqueceu a senha: o administrador gera uma nova senha provisória.
+- As senhas são guardadas apenas como hash PBKDF2-SHA256 com sal (210 mil iterações), nunca em texto.
+- A sessão termina sozinha após 30 minutos sem uso e ao fechar a aba.
+
 ## Perfis de acesso
 
 | Perfil | O que pode fazer |
 |---|---|
-| Recepção | Administrador. Cadastra pacientes e faz o check-in de chegada. |
-| Professor / Responsável técnico | Administradores. Cadastram membros, veem Progresso e Métricas, corrigem registros. |
-| Aluno | Vê apenas a aba Check-in: entrada na clínica, procedimento, liberação provisória e alta dos atendimentos de que participa. |
+| Administrador, professor, responsável técnico | Acesso a tudo: check-in, cadastros, progresso, métricas e configurações. |
+| Recepção | Cadastro de pacientes e check-in de chegada. |
+| Aluno | Check-in na parte clínica (entrada, procedimento, liberação provisória e alta) e a própria produção. |
+
+## Métricas
+
+Painel com indicadores comparados ao período anterior, gráficos (check-ins, tempo médio de espera, chegadas por horário, dia da semana, desfecho dos atendimentos, procedimentos) e tabelas de produção por aluno, procedimentos e supervisão por professor, exportáveis em CSV.
 
 ## Como rodar
 
