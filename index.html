@@ -947,7 +947,7 @@ function vMetricas(){
     if (a.auxiliarMatricula) reg(a.auxiliarMatricula).aux++;
     if (a.circulanteMatricula) reg(a.circulanteMatricula).circ++;
   });
-  const sk = S.sortAl.k, ord = {op:1, aux:3, circ:4, pac:5, proc:6, altas:7, cl:8};
+  const sk = S.sortAl.k, ord = {nome:0, op:2, aux:3, circ:4, pac:5, proc:6, altas:7, cl:8};
   let linhasAl = Object.entries(al).map(([mat,r]) => Object.assign([nomeM(mat), mat, r.op, r.aux, r.circ, r.pac.size, r.proc, r.altas, media(r.cl)], {_mat:mat}));
   linhasAl.sort((a,b) => { const i = ord[sk] ?? 2; const x = a[i] ?? -1, y = b[i] ?? -1; return (typeof x === "string" ? x.localeCompare(y,"pt-BR") : x - y) * S.sortAl.dir; });
   const colsAl = [{t:"Aluno(a)", k:"op_n"},{t:"Matrícula", mono:true},{t:"Operador", num:true, k:"op"},{t:"Auxiliar", num:true, k:"aux"},{t:"Circulante", num:true, k:"circ"},{t:"Pacientes", num:true, k:"pac"},{t:"Procedimentos", num:true, k:"proc"},{t:"Altas", num:true, k:"altas"},{t:"Tempo médio em clínica", num:true, k:"cl", fmt:durTxt}];
