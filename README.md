@@ -80,3 +80,7 @@ Cinco propostas de logo em `logos/`, nas cores azul, amarelo e vermelho:
 | `3-percurso.svg` | Anel de cinco segmentos, um por etapa do check-in |
 | `4-trio.svg` | Coroa formada por três cúspides: operador, auxiliar e circulante |
 | `5-prontuario.svg` | Prancheta com prendedor em forma de dente |
+
+## Licença
+
+Código sob a licença [MIT](LICENSE).
