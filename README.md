@@ -4,6 +4,10 @@
 
 Sistema web para clínica-escola de odontologia. Acompanha o percurso de cada paciente, do check-in na recepção até a alta, com todos os horários registrados no horário de Brasília.
 
+🔗 **Acesse (modo local, para demonstração):** https://santosmiqueias.github.io/cora/
+
+![Tela de entrada do CORA](docs/print-login.jpg)
+
 ## Funcionalidades
 
 ### Check-in
