@@ -365,11 +365,83 @@ dialog::backdrop{background:rgba(16,24,40,.5)}
 .legend i{width:14px;height:14px;border-radius:4px}
 .legend b{font-variant-numeric:tabular-nums;font-family:var(--f-display)}
 .legend em{font-style:normal;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
-td:first-child,th:first-child{min-width:190px}
+td.mono{white-space:nowrap}
+td b,.tdn b{white-space:nowrap}
 .th-sort{border:0;background:none;padding:0;font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;cursor:pointer}
 .th-sort:hover{color:var(--accent-2)}
 @media (max-width:1180px){.dash{grid-template-columns:repeat(2,minmax(0,1fr))}.dash .span-2{grid-column:1/-1}}
 @media (max-width:900px){.dash,.dash2{grid-template-columns:minmax(0,1fr)}.dash .span-2{grid-column:auto}}
+
+/* ===== acabamento: menu escuro, avatares, ícones e profundidade ===== */
+:root{
+  --side-a:#0a1b43; --side-b:#13316f; --side-fg:#ffffff; --side-muted:#a9b8dd; --side-line:rgba(255,255,255,.09); --side-hover:rgba(255,255,255,.06); --side-act:rgba(255,255,255,.12);
+  --av0b:#e3ebff; --av0f:#1f4fb4; --av1b:#dcf5ea; --av1f:#0b7a4b; --av2b:#fdebd8; --av2f:#b45309; --av3b:#efe7fd; --av3f:#6d3fc4;
+  --av4b:#ffe4e8; --av4f:#be123c; --av5b:#dcf2f7; --av5f:#0e7490; --av6b:#fff2c6; --av6f:#8a6100; --av7b:#e6e9f0; --av7f:#3f4a5e;
+  --glow:rgba(31,82,184,.10);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --side-a:#060e24; --side-b:#0c1c44; --side-muted:#93a4cf; --glow:rgba(127,163,245,.08);
+  --av0b:#1c2a4a; --av0f:#9db9f8; --av1b:#123327; --av1f:#6fd8a5; --av2b:#3a2614; --av2f:#f6b07a; --av3b:#2a2046; --av3f:#c4adf7;
+  --av4b:#3d1a22; --av4f:#f58a9d; --av5b:#11313a; --av5f:#6fd0e6; --av6b:#382d0d; --av6f:#f2cd5b; --av7b:#242e40; --av7f:#b3bdd0}}
+:root[data-theme="dark"]{
+  --side-a:#060e24; --side-b:#0c1c44; --side-muted:#93a4cf; --glow:rgba(127,163,245,.08);
+  --av0b:#1c2a4a; --av0f:#9db9f8; --av1b:#123327; --av1f:#6fd8a5; --av2b:#3a2614; --av2f:#f6b07a; --av3b:#2a2046; --av3f:#c4adf7;
+  --av4b:#3d1a22; --av4f:#f58a9d; --av5b:#11313a; --av5f:#6fd0e6; --av6b:#382d0d; --av6f:#f2cd5b; --av7b:#242e40; --av7f:#b3bdd0}
+body::before{background:var(--side-a)}
+.side{background:linear-gradient(180deg,var(--side-a),var(--side-b));border-right:0;color:var(--side-fg)}
+.side .logo{border-bottom-color:var(--side-line);padding-bottom:16px}
+.side .logo-sub{color:var(--side-muted)}
+.side .inst{color:#f7c948}
+.side .inst button{background:rgba(255,255,255,.1);color:var(--side-muted)}
+.side .inst.vazio button{background:none;color:#f7c948}
+.side .nav-lbl{color:rgba(169,184,221,.65)}
+.side .nav-i{color:var(--side-muted);padding:9px 11px;border-radius:9px}
+.side .nav-i svg{color:rgba(169,184,221,.85)}
+.side .nav-i:hover{background:var(--side-hover);color:#fff}
+.side .nav-i[aria-current="page"]{background:var(--side-act);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
+.side .nav-i[aria-current="page"] svg{color:#f7c948}
+.side .nav-i .badge{background:#f4b400;color:#3b2a00}
+.side-foot{border-top-color:var(--side-line);color:rgba(169,184,221,.75)}
+.side-foot b{color:#fff}
+.side .avatar{background:#f4b400;color:#3b2a00}
+.topbar{border-bottom:0;box-shadow:0 1px 0 var(--line),0 6px 18px rgba(16,24,40,.04)}
+.work{background:radial-gradient(1100px 380px at 75% -120px,var(--glow),transparent 70%),var(--bg)}
+.head .eyebrow{display:block;font-size:12.5px;font-weight:600;color:var(--accent);margin-bottom:3px;letter-spacing:.01em}
+.head h1{font-size:26px}
+.panel,.kpi,.dstat{border-radius:14px}
+.panel{box-shadow:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.05)}
+.panel-h{padding:15px 20px}
+.panel-b{padding:16px 20px}
+th{background:transparent;text-transform:uppercase;letter-spacing:.05em;font-size:11px;color:var(--subtle);padding-top:11px;padding-bottom:11px}
+tbody tr:hover td{background:var(--surface-2)}
+.tdn{display:inline-flex;align-items:center;gap:10px;min-width:0}
+.av{width:34px;height:34px;border-radius:50%;display:inline-grid;place-items:center;font-weight:700;font-size:12px;font-family:var(--f-display);flex:none;letter-spacing:.02em}
+.av.sm{width:28px;height:28px;font-size:10.5px}
+.av.lg{width:48px;height:48px;font-size:16px}
+.av-0{background:var(--av0b);color:var(--av0f)} .av-1{background:var(--av1b);color:var(--av1f)} .av-2{background:var(--av2b);color:var(--av2f)} .av-3{background:var(--av3b);color:var(--av3f)}
+.av-4{background:var(--av4b);color:var(--av4f)} .av-5{background:var(--av5b);color:var(--av5f)} .av-6{background:var(--av6b);color:var(--av6f)} .av-7{background:var(--av7b);color:var(--av7f)}
+.card-pac{display:flex;align-items:center;gap:10px;min-width:0}
+.li .l{display:flex;align-items:center;gap:11px}
+.li .l>div{min-width:0}
+.kpi{position:relative}
+.kpi span{padding-right:42px}
+.kpi-ic{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.kpi-ic svg{width:18px;height:18px}
+.kpi.hl{background:var(--surface);border-color:var(--line)}
+.kpi.hl .kpi-ic{background:var(--accent);color:var(--accent-ink)}
+.dstat .ic{border-radius:12px;width:44px;height:44px}
+.col{background:color-mix(in srgb,var(--surface-3) 75%,transparent);border:1px solid var(--line);border-radius:14px}
+.card{border-radius:12px;box-shadow:0 1px 2px rgba(16,24,40,.05),0 2px 6px rgba(16,24,40,.04);transition:box-shadow .15s,transform .15s,border-color .15s}
+.card:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(16,24,40,.08)}
+.btn.primary{background:linear-gradient(180deg,var(--accent-2),var(--accent));box-shadow:0 1px 2px rgba(16,24,40,.12),inset 0 1px 0 rgba(255,255,255,.16)}
+.btn:active{transform:translateY(1px)}
+.empty::before{content:"";display:block;width:42px;height:42px;margin:0 auto 10px;border-radius:12px;background:var(--surface-3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a95a8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='3' width='16' height='18' rx='2'/%3E%3Cpath d='M8 8h8M8 12h8M8 16h5'/%3E%3C/svg%3E") center/20px no-repeat}
+.col .empty::before,td .empty::before{width:34px;height:34px;background-size:17px;margin-bottom:8px}
+.visit{border-radius:12px}
+.gate-brand{background:radial-gradient(circle at 15% 8%,rgba(255,255,255,.14),transparent 38%),linear-gradient(155deg,#0a1b43 0%,#16337a 48%,#1f52b8 100%)}
+.gate-form{background:var(--bg)}
+.gate{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:32px;box-shadow:var(--shadow-lg);max-width:420px}
+@media (max-width:900px){.side{background:linear-gradient(90deg,var(--side-a),var(--side-b))}.gate{padding:24px;box-shadow:none;border:0;background:transparent}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 </head>
@@ -676,7 +748,7 @@ function renderTabs(){
   const aguard = S.atend.filter(a => a.etapa === "recepcao").length;
   const item = ([k,n,i]) => `<button class="nav-i" type="button" data-tab="${k}" aria-current="${S.view===k?"page":"false"}">${i}<span>${n}</span>${k==="checkin" && aguard ? `<span class="badge" title="${aguard} aguardando na recepção">${aguard}</span>` : ""}</button>`;
   const secao = (lbl, ks) => { const l = tabs.filter(t => ks.includes(t[0])); return l.length ? `<div class="nav-lbl">${lbl}</div>` + l.map(item).join("") : ""; };
-  if (!$("#wm").innerHTML) $("#wm").innerHTML = WORDMARK();
+  if (!$("#wm").innerHTML) $("#wm").innerHTML = WORDMARK(true);
   $("#busca-wrap").hidden = !(isRecep() || isProf());
   $("#tabs").innerHTML = secao("Atendimento", ["checkin","producao"]) + secao(isRecepcao() ? "Recepção" : "Gestão", ["identificacao","painel","progresso","metricas"])
     + (isClin() ? `<div class="nav-lbl">Configurações</div><button class="nav-i" type="button" data-act="config">${ICON_CFG}<span>Procedimentos</span></button>${isAdmin() ? `<button class="nav-i" type="button" data-act="semestres">${ICON_CAL}<span>Semestres letivos</span></button>` : ""}` : "");
@@ -691,11 +763,32 @@ function renderInst(){
     : pode ? `<button type="button" data-act="inst">+ Definir nome da clínica</button>` : "";
   document.title = S.inst ? `CORA · ${S.inst}` : "CORA";
 }
+const avIdx = (n) => { let h = 0; for (const c of String(n || "")) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % 8; };
+const av = (nome, cls = "") => `<span class="av av-${avIdx(nome)} ${cls}" aria-hidden="true">${esc(iniciais(nome))}</span>`;
+const primeiroNome = (n) => (String(n || "").replace(/\(.*?\)/g, " ").replace(/\b(Profa?|Dra?)\.?\s/gi, " ").trim().split(/\s+/)[0] || "");
+const saudacao = () => { const h = +fHoraNum.format(new Date()); return h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite"; };
+const IC = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const KPI_IC = [
+  [/pacientes/i, IC('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.7.8 2.7 2.5 3 5.2"/>')],
+  [/espera/i, IC('<path d="M6 2h12M6 22h12M7 2v4l5 6-5 6v4M17 2v4l-5 6 5 6v4"/>')],
+  [/tempo em cl|em atendimento/i, IC('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>')],
+  [/procedimento/i, IC('<path d="M8 4c-2.5 0-4 2-4 5 0 2.5 1 4 1.7 6 .6 2 .8 5 2.3 5s1.5-3.5 3-4h2c1.5.5 1.5 4 3 4s1.7-3 2.3-5c.7-2 1.7-3.5 1.7-6 0-3-1.5-5-4-5-2 0-2.8 1-4 1s-2-1-4-1z"/>')],
+  [/altas/i, IC('<path d="M20 6L9 17l-5-5"/>')],
+  [/retornos/i, IC('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>')],
+  [/check-ins|chegadas/i, IC('<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/>')],
+];
+function decorarKpis(){
+  view.querySelectorAll(".kpi").forEach(k => {
+    if (k.querySelector(".kpi-ic")) return;
+    const t = k.querySelector("span")?.textContent || "", ic = KPI_IC.find(([r]) => r.test(t));
+    if (ic) k.insertAdjacentHTML("afterbegin", `<i class="kpi-ic" aria-hidden="true">${ic[1]}</i>`);
+  });
+}
 function renderMe(){
   const m = liberado() ? me() : null;
   const role = m ? (m.temporario ? "Acesso temporário" : FUNCOES[m.tipo] || "") : "";
   const ini = m ? iniciais(m.nome) : "?";
-  $("#me").innerHTML = m ? `<span class="avatar" aria-hidden="true">${esc(ini)}</span><span class="me-txt"><b>${esc(m.nome)}</b><span>${esc(role)}</span></span>` : "";
+  $("#me").innerHTML = m ? `<span class="avatar av-${avIdx(m.nome)}" aria-hidden="true">${esc(ini)}</span><span class="me-txt"><b>${esc(m.nome)}</b><span>${esc(role)}</span></span>` : "";
   $("#me").setAttribute("aria-label", m ? `Sua conta: ${m.nome}` : "Conta");
   $("#mme").innerHTML = m ? `<button class="avatar" type="button" data-act="conta" style="cursor:pointer" aria-label="Conta de ${esc(m.nome)}">${esc(ini)}</button>` : "";
 }
@@ -757,6 +850,7 @@ function render(){
   if (!S.canWrite) pre += `<div class="banner">Você tem acesso somente de leitura.</div>`;
   const fn = {checkin:vCheckin, identificacao:vIdent, progresso:vProgresso, metricas:vMetricas, producao:() => vProducao(true), painel:vPainelRecep}[S.view];
   view.innerHTML = pre + fn();
+  decorarKpis();
   restore(aid, sel); tick();
 }
 function restore(aid, sel){ if (!aid) return; const el = document.getElementById(aid); if (el) { el.focus(); if (sel && el.setSelectionRange) try { el.setSelectionRange(sel[0], sel[1]); } catch {} } }
@@ -775,7 +869,7 @@ function cardAt(a){
   const nTrilha = {recepcao:1, clinica:2, procedimento:3, provisoria:4, alta:4}[a.etapa] || 1;
   return `<div class="card${isAluno() && meu(a) ? " mine" : ""}">
     <div class="track${a.etapa === "alta" ? " fim" : ""}" aria-hidden="true">${[0,1,2,3].map(i => `<i class="${i < nTrilha ? "on" : ""}"></i>`).join("")}</div>
-    <div class="card-top">${verOk ? `<b data-ver="${a.id}" role="button" tabindex="0">${esc(p?.nome || "Paciente removido")}</b>` : `<b style="cursor:default">${esc(p?.nome || "Paciente removido")}</b>`}${extra}</div>
+    <div class="card-top"><span class="card-pac">${av(p?.nome || "?", "sm")}${verOk ? `<b data-ver="${a.id}" role="button" tabindex="0">${esc(p?.nome || "Paciente removido")}</b>` : `<b style="cursor:default">${esc(p?.nome || "Paciente removido")}</b>`}</span>${extra}</div>
     <div class="sub">Pront. ${esc(p?.prontuario||"—")} · ${equipe(a).length > 1 ? "Equipe (" + tamEquipe(a) + ")" : "Aluno(a)"}: ${esc(alunosTxt(a))}${a.dataBR!==hoje?` · <span class="old">aberto desde ${esc(kShort(a.dataBR))}</span>`:""}</div>
     ${p?.alergias && a.etapa !== "alta" && a.etapa !== "provisoria" ? `<div class="sub" style="color:var(--bad);font-weight:600">Atenção: ${esc(p.alergias)}</div>` : ""}
     <div class="steps">${steps}</div>
@@ -792,7 +886,7 @@ function vCheckin(){
   const esperas = ativos.filter(a => ts(a,"clinica") && a.dataBR===hoje).map(a => mins(ts(a,"recepcao"), ts(a,"clinica")));
   const media = esperas.length ? esperas.reduce((x,y)=>x+y,0)/esperas.length : null;
   const papelTxt = papel() === "recepcao" ? "Recepção: cadastre pacientes e registre a chegada." : isAluno() ? "Registre a entrada do paciente na clínica, finalize o procedimento e libere o paciente. Seus atendimentos aparecem destacados." : "";
-  return `<div class="head"><div><h1>Check-in</h1><p>${esc((d => d.charAt(0).toUpperCase() + d.slice(1))(kDate(hoje,{weekday:"long",day:"numeric",month:"long"})))}</p>${papelTxt?`<p style="font-size:13px">${papelTxt}</p>`:""}</div>
+  return `<div class="head"><div><span class="eyebrow">${saudacao()}${me() ? ", " + esc(primeiroNome(me().nome)) : ""}</span><h1>Check-in</h1><p>${esc((d => d.charAt(0).toUpperCase() + d.slice(1))(kDate(hoje,{weekday:"long",day:"numeric",month:"long"})))}</p>${papelTxt?`<p style="font-size:13px">${papelTxt}</p>`:""}</div>
     ${isRecep() && S.canWrite ? `<div class="row"><button class="btn" type="button" data-act="novo-pac">Cadastrar paciente</button><button class="btn primary" type="button" data-act="checkin">+ Check-in na recepção</button></div>` : ""}</div>
   ${S.mode === "loading" ? `<div class="panel"><div class="empty">Carregando atendimentos…</div></div>` : `
   <div class="daystrip">
@@ -835,7 +929,7 @@ function vIdent(){
       <div class="row" style="flex:1;min-width:0"><input type="search" id="mem-busca" placeholder="Buscar por nome, matrícula${al?" ou código":""}" value="${esc(S.memBusca)}" style="max-width:340px" aria-label="Buscar">
       <select id="mem-filtro" style="width:auto" aria-label="Filtrar">${filtros}</select></div></div>
       <div class="tbl-wrap"><table><thead><tr><th>${al?"Matrícula / código":"Matrícula"}</th><th>Nome completo</th>${al?"":"<th>Função</th>"}<th>${al?"Período / turma":"Setor"}</th><th>Situação</th>${isAdmin() ? "<th>Senha</th>" : ""}</tr></thead><tbody>
-      ${lista.length ? lista.map(m=>`<tr ${isAdmin() ? `class="click" data-edit-m="${esc(m.matricula)}"` : ""}><td class="mono">${esc(m.matricula)}</td><td><b>${esc(m.nome)}</b></td>${al?"":`<td>${esc(FUNCOES[m.tipo]||m.tipo)}${ADMINS.includes(m.tipo)?' <span class="pill" style="background:var(--accent-soft);color:var(--accent)">admin</span>':""}</td>`}<td>${esc(m.periodo||"—")}</td><td>${m.ativo===false?'<span class="pill e-provisoria">Inativo</span>': vencido(m)?'<span class="pill e-provisoria">Código vencido</span>' : m.temporario?`<span class="pill e-recepcao">Temporário até ${esc(kShort(m.validade).slice(0,5))}</span>`:'<span class="pill e-alta">Ativo</span>'}</td>${isAdmin() ? `<td>${senhaTag(m)}</td>` : ""}</tr>`).join("")
+      ${lista.length ? lista.map(m=>`<tr ${isAdmin() ? `class="click" data-edit-m="${esc(m.matricula)}"` : ""}><td class="mono">${esc(m.matricula)}</td><td><span class="tdn">${av(m.nome, "sm")}<b>${esc(m.nome)}</b></span></td>${al?"":`<td>${esc(FUNCOES[m.tipo]||m.tipo)}${ADMINS.includes(m.tipo)?' <span class="pill" style="background:var(--accent-soft);color:var(--accent)">admin</span>':""}</td>`}<td>${esc(m.periodo||"—")}</td><td>${m.ativo===false?'<span class="pill e-provisoria">Inativo</span>': vencido(m)?'<span class="pill e-provisoria">Código vencido</span>' : m.temporario?`<span class="pill e-recepcao">Temporário até ${esc(kShort(m.validade).slice(0,5))}</span>`:'<span class="pill e-alta">Ativo</span>'}</td>${isAdmin() ? `<td>${senhaTag(m)}</td>` : ""}</tr>`).join("")
         : `<tr><td colspan="${(al?4:5) + (isAdmin()?1:0)}"><div class="empty">${S.membros.some(m => al ? m.tipo==="aluno" : m.tipo!=="aluno") ? "Ninguém encontrado com esse filtro." : al ? "Nenhum aluno cadastrado ainda." : "Nenhum colaborador cadastrado ainda."}</div></td></tr>`}
       </tbody></table></div></section>`;
   }
@@ -847,7 +941,7 @@ function vIdent(){
   ${!isRecep() ? `<div class="banner">Somente recepção, responsável técnico e administrador cadastram e alteram dados de pacientes.</div>` : ""}
   <section class="panel"><div class="panel-h"><input type="search" id="pac-busca" placeholder="Buscar por nome, prontuário, CPF ou telefone" value="${esc(S.pacBusca)}" style="max-width:380px" aria-label="Buscar paciente"></div>
     <div class="tbl-wrap"><table><thead><tr><th>Pront.</th><th>Paciente</th><th>Idade</th><th>CPF</th><th>Telefone</th><th>Último atendimento</th><th>Situação</th></tr></thead><tbody>
-    ${lista.length ? lista.map(p=>{ const st = statusPac(p); return `<tr class="click" data-edit-p="${p.id}"><td class="mono">${esc(p.prontuario||"—")}</td><td><b>${esc(p.nome)}</b>${p.alergias?` <span class="pill" style="background:var(--bad-soft);color:var(--bad)">alerta</span>`:""}</td><td>${idade(p.nascimento) ?? "—"}</td><td class="mono">${esc(p.cpf||"—")}</td><td class="mono">${esc(p.telefone||"—")}</td><td>${st.ult ? esc(kShort(st.ult.dataBR))+`<div style="color:var(--muted);font-size:12.5px">${esc(alunosTxt(st.ult))}</div>` : "—"}</td><td><span class="pill ${st.k==="novo"?"":"e-"+st.k}">${esc(st.t)}</span></td></tr>`; }).join("")
+    ${lista.length ? lista.map(p=>{ const st = statusPac(p); return `<tr class="click" data-edit-p="${p.id}"><td class="mono">${esc(p.prontuario||"—")}</td><td><span class="tdn">${av(p.nome, "sm")}<b>${esc(p.nome)}</b></span>${p.alergias?` <span class="pill" style="background:var(--bad-soft);color:var(--bad)">alerta</span>`:""}</td><td>${idade(p.nascimento) ?? "—"}</td><td class="mono">${esc(p.cpf||"—")}</td><td class="mono">${esc(p.telefone||"—")}</td><td>${st.ult ? esc(kShort(st.ult.dataBR))+`<div style="color:var(--muted);font-size:12.5px">${esc(alunosTxt(st.ult))}</div>` : "—"}</td><td><span class="pill ${st.k==="novo"?"":"e-"+st.k}">${esc(st.t)}</span></td></tr>`; }).join("")
       : `<tr><td colspan="7"><div class="empty">${S.pacientes.length ? "Nenhum paciente encontrado." : "Nenhum paciente cadastrado ainda."}</div></td></tr>`}
     </tbody></table></div></section>`;
 }
@@ -888,7 +982,7 @@ function vProducao(self){
     const top = Object.entries(pc).sort((a,b)=>b[1]-a[1]), mx = top[0]?.[1] || 1;
     const concl = x.op.filter(a => ts(a,"procedimento")).length;
     det = `<div class="panel-b stack">
-      <div class="ph"><div><h2>${esc(x.m.nome)}</h2><span style="color:var(--muted)">${esc(x.m.temporario?"Código temporário ":"Matrícula ")}${esc(x.m.matricula)}${x.m.periodo?" · "+esc(x.m.periodo):""}</span></div></div>
+      <div class="ph"><div class="tdn">${av(x.m.nome, "lg")}<div><h2>${esc(x.m.nome)}</h2><span style="color:var(--muted)">${esc(x.m.temporario?"Código temporário ":"Matrícula ")}${esc(x.m.matricula)}${x.m.periodo?" · "+esc(x.m.periodo):""}</span></div></div></div>
       <div class="kmini">
         <div><span>Atendimentos (operador)</span><b>${x.op.length}</b></div>
         <div><span>Como auxiliar</span><b>${x.aux.length}</b></div>
@@ -908,7 +1002,7 @@ function vProducao(self){
   return periodoHTML + `
   <div class="split">
     <section class="panel"><div class="panel-h"><input type="search" id="prod-busca" placeholder="Buscar aluno por nome ou matrícula" value="${esc(S.prodBusca)}" aria-label="Buscar aluno"></div>
-      <div class="list">${als.length ? als.map(y=>`<div class="li" role="button" tabindex="0" data-asel="${esc(y.m.matricula)}" aria-selected="${y.m.matricula===S.progAluno}"><div class="l"><b>${esc(y.m.nome)}</b><span class="s">${esc(y.m.matricula)}${y.m.temporario?" · temporário":""} · ${y.procs} procedimento(s)</span></div><span class="pill e-clinica" title="Atendimentos como operador">${y.op.length}</span></div>`).join("") : `<div class="empty">Nenhum aluno encontrado.</div>`}</div></section>
+      <div class="list">${als.length ? als.map(y=>`<div class="li" role="button" tabindex="0" data-asel="${esc(y.m.matricula)}" aria-selected="${y.m.matricula===S.progAluno}"><div class="l">${av(y.m.nome, "sm")}<div><b>${esc(y.m.nome)}</b><span class="s">${esc(y.m.matricula)}${y.m.temporario?" · temporário":""} · ${y.procs} procedimento(s)</span></div></div><span class="pill e-clinica" title="Atendimentos como operador">${y.op.length}</span></div>`).join("") : `<div class="empty">Nenhum aluno encontrado.</div>`}</div></section>
     <section class="panel">${det}</section>
   </div>`;
 }
@@ -940,7 +1034,7 @@ function vProgresso(){
     const procs = vs.reduce((n,a)=>n+(a.procedimentos?.length||0),0);
     const quem = new Set(vs.flatMap(equipe));
     det = `<div class="panel-b stack">
-      <div class="ph"><div><h2>${esc(p.nome)}</h2><span style="color:var(--muted)">Prontuário ${esc(p.prontuario||"—")} · ${idade(p.nascimento) ?? "—"} anos</span></div><span class="pill ${st.k==="novo"?"":"e-"+st.k}">${esc(st.t)}</span></div>
+      <div class="ph"><div class="tdn">${av(p.nome, "lg")}<div><h2>${esc(p.nome)}</h2><span style="color:var(--muted)">Prontuário ${esc(p.prontuario||"—")} · ${idade(p.nascimento) ?? "—"} anos</span></div></div><span class="pill ${st.k==="novo"?"":"e-"+st.k}">${esc(st.t)}</span></div>
       ${p.alergias ? `<div class="alert">Alergias / condições: ${esc(p.alergias)}</div>` : ""}
       <dl class="facts"><div><dt>Atendimentos</dt><dd>${vs.length}</dd></div><div><dt>Procedimentos</dt><dd>${procs}</dd></div><div><dt>Alunos que atenderam</dt><dd>${quem.size}</dd></div><div><dt>Primeira visita</dt><dd>${vs.length?esc(kShort(vs[vs.length-1].dataBR)):"—"}</dd></div></dl>
       ${vs.length ? vs.map(a=>visitaHTML(a)).join("") : `<div class="empty">Este paciente ainda não passou pelo check-in.</div>`}
@@ -951,7 +1045,7 @@ function vProgresso(){
     <section class="panel"><div class="panel-h" style="flex-direction:column;align-items:stretch">
       <input type="search" id="prog-busca" placeholder="Buscar por nome ou prontuário" value="${esc(S.progBusca)}" aria-label="Buscar paciente">
       <div class="seg" role="group">${[["todos","Todos"],["agora","Na clínica agora"],["trat","Em tratamento"],["alta","Alta"]].map(([k,n])=>`<button type="button" data-pf="${k}" aria-pressed="${S.progFiltro===k}">${n}</button>`).join("")}</div></div>
-      <div class="list">${lista.length ? lista.map(x=>`<div class="li" role="button" tabindex="0" data-psel="${x.p.id}" aria-selected="${x.p.id===S.progSel}"><div class="l"><b>${esc(x.p.nome)}</b><span class="s">Pront. ${esc(x.p.prontuario||"—")} · ${x.n} atendimento(s)</span></div><span class="pill ${x.st.k==="novo"?"":"e-"+x.st.k}">${esc(x.st.k==="novo"?"Novo":x.st.k==="alta"?"Alta":x.st.k==="provisoria"?"Em tratamento":ETAPAS[x.st.k].curto)}</span></div>`).join("")
+      <div class="list">${lista.length ? lista.map(x=>`<div class="li" role="button" tabindex="0" data-psel="${x.p.id}" aria-selected="${x.p.id===S.progSel}"><div class="l">${av(x.p.nome, "sm")}<div><b>${esc(x.p.nome)}</b><span class="s">Pront. ${esc(x.p.prontuario||"—")} · ${x.n} atendimento(s)</span></div></div><span class="pill ${x.st.k==="novo"?"":"e-"+x.st.k}">${esc(x.st.k==="novo"?"Novo":x.st.k==="alta"?"Alta":x.st.k==="provisoria"?"Em tratamento":ETAPAS[x.st.k].curto)}</span></div>`).join("")
         : `<div class="empty">${S.pacientes.length?"Nenhum paciente neste filtro.":"Nenhum paciente cadastrado."}</div>`}</div></section>
     <section class="panel">${det}</section>
   </div>`;
