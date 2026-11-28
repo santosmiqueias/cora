@@ -1,5 +1,7 @@
 # Estrutura de dados do CORA
 
+> Banco atual: Supabase (Postgres). As tabelas usam os mesmos campos descritos abaixo, com nomes em `snake_case` (ex.: `pacienteId` → `paciente_id`, `dataBR` → `data_br`). Na tabela `membros` há também `user_id` (usuário do Supabase Auth) e `trocar_senha`. As coleções `senhas` e `vinculos` só existem na versão antiga do claude.ai.
+
 Os dados ficam em coleções de documentos JSON. Todos os horários são gravados em ISO 8601 (UTC) e exibidos no horário de Brasília (`America/Sao_Paulo`). Datas de calendário (`dataBR`, `nascimento`, `validade`) usam `AAAA-MM-DD` no horário de Brasília.
 
 ## `membros/{matricula}`

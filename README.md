@@ -50,8 +50,8 @@ Visível só para administradores. Períodos: dia, semana, mês, semestre letivo
 - No primeiro uso, o responsável cria a conta do **primeiro administrador**.
 - Ao cadastrar alguém, o sistema gera uma **senha provisória**. No primeiro acesso, a pessoa cria a própria senha (mínimo de 8 caracteres, com letras e números).
 - Esqueceu a senha: o administrador gera uma nova senha provisória.
-- As senhas são guardadas apenas como hash PBKDF2-SHA256 com sal (210 mil iterações), nunca em texto.
-- A sessão termina sozinha após 30 minutos sem uso e ao fechar a aba.
+- As senhas são verificadas e guardadas pelo Supabase Auth (com hash no servidor), nunca em texto.
+- A sessão termina sozinha após 30 minutos sem uso.
 
 ## Perfis de acesso
 
@@ -67,11 +67,18 @@ Painel com indicadores comparados ao período anterior, gráficos (check-ins, te
 
 ## Como rodar
 
-O sistema é uma única página: abra o `index.html` em qualquer navegador.
+O CORA é publicado pelo GitHub Pages: **https://santosmiqueias.github.io/cora/**
 
-Aberto diretamente, ele roda em **modo local**: os dados ficam salvos só no navegador de quem abriu. Serve para testar e demonstrar.
+Os dados, o login e as regras de acesso ficam no **Supabase** (projeto `cora`, região São Paulo):
 
-A versão em uso pela equipe roda hospedada no claude.ai, que oferece o banco de dados compartilhado, o login e as regras de acesso. Para rodar de forma independente, em servidor próprio e com login institucional, é preciso trocar a camada de dados (`local` / `remote` no início do script) por um serviço como o Supabase. A estrutura de dados está em [`docs/estrutura-de-dados.md`](docs/estrutura-de-dados.md).
+- **Banco de dados:** tabelas `membros`, `pacientes`, `atendimentos` e `config`, com regras de acesso (RLS) por perfil aplicadas no servidor.
+- **Login:** Supabase Auth. Cada matrícula vira um usuário interno (`matricula@cora.example.com`); a pessoa só digita a matrícula e a senha.
+- **Gestão de acessos:** a função de servidor `cora-admin` cria senhas provisórias, remove acessos e atualiza o login após converter um código temporário. Ela usa a chave secreta do projeto, que nunca vai para o navegador.
+- **Tempo real:** mudanças feitas em um computador aparecem nos outros sem recarregar a página.
+
+A chave publicável do Supabase que está no `index.html` é pública por natureza; a proteção dos dados vem das regras de acesso do banco.
+
+Sem a biblioteca do Supabase (por exemplo, dentro do claude.ai), a página volta ao modo antigo, com o banco do próprio claude.ai.
 
 ## Logos
 

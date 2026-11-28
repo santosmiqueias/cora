@@ -356,6 +356,7 @@ td:first-child,th:first-child{min-width:190px}
 @media (max-width:1180px){.dash{grid-template-columns:repeat(2,minmax(0,1fr))}.dash .span-2{grid-column:1/-1}}
 @media (max-width:900px){.dash,.dash2{grid-template-columns:minmax(0,1fr)}.dash .span-2{grid-column:auto}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 </head>
 <body>
 <div class="shell">
@@ -452,13 +453,72 @@ function remote(db){
     async del(c, id){ await db.doc(c+"/"+id).delete(); },
   };
 }
+/* ===== Supabase (usado quando a biblioteca está carregada, como no GitHub Pages) ===== */
+const SB_URL = "https://chmbmyyrbdowfbtzxjhp.supabase.co", SB_KEY = "sb_publishable_UE-61Wxkdg6IvQmcwyuJLA_09it_332";
+const sb = window.supabase?.createClient ? window.supabase.createClient(SB_URL, SB_KEY, {auth:{persistSession:true, storageKey:"cora-auth"}}) : null;
+const emailDe = (mat) => String(mat).toLowerCase() + "@cora.example.com";
+const COLUNAS = {
+  membros: ["matricula","nome","tipo","periodo","ativo","temporario","validade","convertido_de","criado_em","criado_por"],
+  pacientes: ["id","nome","prontuario","nascimento","cpf","telefone","alergias","obs","criado_em","criado_por"],
+  atendimentos: ["id","paciente_id","data_br","etapa","eventos","aluno_matricula","auxiliar_matricula","circulante_matricula","professor_matricula","procedimentos","dentes","descricao","retorno_previsto","criado_em"],
+};
+const DATAS_DB = ["validade","nascimento","retorno_previsto"];
+const paraSnake = (k) => k === "dataBR" ? "data_br" : k.replace(/[A-Z]/g, (c) => "_" + c.toLowerCase());
+const paraCamel = (k) => k === "data_br" ? "dataBR" : k.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+function paraDb(tab, obj){
+  const r = {};
+  for (const [k, v] of Object.entries(obj || {})) { const sk = paraSnake(k); if (!COLUNAS[tab]?.includes(sk)) continue; r[sk] = DATAS_DB.includes(sk) && !v ? null : v; }
+  return r;
+}
+function deDb(tab, row){
+  const r = {};
+  for (const [k, v] of Object.entries(row)) r[paraCamel(k)] = DATAS_DB.includes(k) && v == null ? "" : v;
+  if (tab === "membros") r.id = row.matricula;
+  return r;
+}
+async function carregar(t){
+  if (!sb) return;
+  let todos = [], de = 0;
+  for (;;) { const {data, error} = await sb.from(t).select("*").range(de, de + 999); if (error) throw error; todos = todos.concat(data); if (data.length < 1000) break; de += 1000; }
+  if (t === "config") { for (const r of todos) { if (r.chave === "semestres") S.semestres = r.valor?.lista || null; else if (r.chave === "procedimentos") S.procs = r.valor?.lista || null; else if (r.chave === "instituicao") S.inst = r.valor?.nome || ""; } return; }
+  S[t === "atendimentos" ? "atend" : t] = todos.map(r => deDb(t, r));
+}
+const carregarTudo = () => Promise.all(["membros","pacientes","atendimentos","config"].map(carregar));
+const tempos = {};
+function assinarTempoReal(){
+  const ch = sb.channel("cora-dados");
+  ["membros","pacientes","atendimentos","config"].forEach(t => ch.on("postgres_changes", {event:"*", schema:"public", table:t}, () => {
+    if (!S.meMat) return; clearTimeout(tempos[t]); tempos[t] = setTimeout(() => carregar(t).then(render).catch(()=>{}), 400);
+  }));
+  ch.subscribe();
+}
+const CHAVE = {membros:"matricula", config:"chave"};
+const semPermissao = () => ({code:"invalid_argument", message:"sem permissão"});
+function supa(){
+  return {
+    async add(c, d){ const row = paraDb(c, d); delete row.id; const {data, error} = await sb.from(c).insert(row).select("id").single(); if (error) throw error; await carregar(c); render(); return data.id; },
+    async set(c, id, d){
+      const row = c === "config" ? {chave:id, valor:d} : Object.assign(paraDb(c, d), {[CHAVE[c] || "id"]: id});
+      const {error} = await sb.from(c).upsert(row, {onConflict: CHAVE[c] || "id"}); if (error) throw error; await carregar(c); render(); },
+    async patch(c, id, d){ const {data, error} = await sb.from(c).update(paraDb(c, d)).eq(CHAVE[c] || "id", id).select(CHAVE[c] || "id"); if (error) throw error; if (!data?.length) throw semPermissao(); await carregar(c); render(); },
+    async del(c, id){ const {data, error} = await sb.from(c).delete().eq(CHAVE[c] || "id", id).select(CHAVE[c] || "id"); if (error) throw error; if (!data?.length) throw semPermissao(); await carregar(c); render(); },
+  };
+}
+async function funcaoAdmin(body){
+  const {data, error} = await sb.functions.invoke("cora-admin", {body});
+  if (data?.erro) throw {code:"fn", message:data.erro};
+  if (error) { let msg = error.message; try { const j = await error.context.json(); if (j?.erro) msg = j.erro; } catch {} throw {code:"fn", message:msg}; }
+  return data;
+}
 const strip = (o) => { const r = {...o}; delete r.id; return r; };
 async function save(fn, ok){
   try { await fn(); if (ok) toast(ok); return true; }
   catch (e) {
     const c = e && e.code;
     if (c === "quota_exceeded") toast("Limite de armazenamento atingido. Exclua registros antigos.");
-    else if (c === "invalid_argument") toast("Você não tem permissão para esta ação. Peça acesso à coordenação.");
+    else if (c === "invalid_argument" || c === "42501") toast("Você não tem permissão para esta ação.");
+    else if (c === "fn" || c === "auth") toast(e.message);
+    else if (c === "23505") toast("Já existe um registro com esses dados (matrícula, prontuário ou CPF repetido).");
     else toast("Não foi possível salvar. Verifique a conexão e tente de novo.");
     return false;
   }
@@ -519,17 +579,30 @@ function senhaProvisoria(){
   return s;
 }
 async function gravarSenha(mat, senha, provisoria){
+  if (S.mode === "supa") {
+    if (mat === S.meMat && !provisoria) {
+      const {error} = await sb.auth.updateUser({password:senha});
+      if (error) throw {code:"auth", message: /different/i.test(error.message) ? "A nova senha precisa ser diferente da atual." : "Não foi possível trocar a senha: " + error.message};
+      const r = await sb.rpc("senha_trocada"); if (r.error) throw r.error;
+    } else await funcaoAdmin({acao:"senha_provisoria", matricula:mat, senha});
+    await carregar("membros"); return;
+  }
   const rec = await hashSenha(senha);
   await B.set("senhas", mat, {...rec, trocar:!!provisoria, em:new Date().toISOString(), por:S.meMat||""});
 }
 const SKEY = "cora-sessao", INATIVO_MIN = 30;
 function lerSessao(){ try { const x = JSON.parse(sessionStorage.getItem(SKEY)||"null"); if (x && Date.now() - x.last < INATIVO_MIN*60000) return x; } catch {} return null; }
-function gravarSessao(){ try { S.meMat ? sessionStorage.setItem(SKEY, JSON.stringify({mat:S.meMat, troca:S.forcarTroca, last:Date.now()})) : sessionStorage.removeItem(SKEY); } catch {} }
-function sair(msg){ S.meMat = null; S.forcarTroca = false; gravarSessao(); try { localStorage.removeItem(LKEY+"-view"); } catch {} S.view = "checkin"; render(); if (msg) toast(msg); }
+function gravarSessao(){ try { localStorage.setItem("cora-ultimo", String(Date.now())); } catch {} try { S.meMat ? sessionStorage.setItem(SKEY, JSON.stringify({mat:S.meMat, troca:S.forcarTroca, last:Date.now()})) : sessionStorage.removeItem(SKEY); } catch {} }
+function sair(msg){ if (S.mode === "supa") sb.auth.signOut().catch(()=>{}); S.meMat = null; S.forcarTroca = false; gravarSessao(); try { localStorage.removeItem(LKEY+"-view"); } catch {} S.view = "checkin"; render(); if (msg) toast(msg); }
 let ultimoUso = Date.now();
 ["pointerdown","keydown"].forEach(ev => document.addEventListener(ev, () => { ultimoUso = Date.now(); if (S.meMat) gravarSessao(); }, {passive:true}));
 setInterval(() => { if (S.meMat && Date.now() - ultimoUso > INATIVO_MIN*60000) { if (dlg.open) dlg.close(); sair("Sessão encerrada após 30 minutos sem uso. Entre de novo."); } }, 30000);
-const precisaConfigurar = () => S.senhasOk && !Object.keys(S.senhas).length;
+const precisaConfigurar = () => S.mode !== "supa" && S.senhasOk && !Object.keys(S.senhas).length;
+const estadoSenha = (m) => S.mode === "supa" ? (!m.userId ? "sem" : m.trocarSenha ? "prov" : "def") : (!S.senhas[m.matricula] ? "sem" : S.senhas[m.matricula].trocar ? "prov" : "def");
+async function senhaAtualOk(senha){
+  if (S.mode === "supa") { const {error} = await sb.auth.signInWithPassword({email:emailDe(S.meMat), password:senha}); return !error; }
+  return confere(senha, S.senhas[S.meMat]);
+}
 
 /* ===== render ===== */
 const view = $("#view");
@@ -687,7 +760,7 @@ function vIdent(){
     <button type="button" data-idsub="alunos" aria-pressed="${S.idSub==="alunos"}">Alunos (${nAl})</button>
     <button type="button" data-idsub="colaboradores" aria-pressed="${S.idSub==="colaboradores"}">Colaboradores (${nCo})</button>
     <button type="button" data-idsub="pacientes" aria-pressed="${S.idSub==="pacientes"}">Pacientes (${S.pacientes.length})</button></div>`;
-  const senhaTag = (m) => { const r = S.senhas[m.matricula]; return !r ? '<span class="pill e-provisoria">Sem senha</span>' : r.trocar ? '<span class="pill e-recepcao">Provisória</span>' : '<span class="pill e-alta">Definida</span>'; };
+  const senhaTag = (m) => { const e = estadoSenha(m); return e === "sem" ? '<span class="pill e-provisoria">Sem senha</span>' : e === "prov" ? '<span class="pill e-recepcao">Provisória</span>' : '<span class="pill e-alta">Definida</span>'; };
   if (S.idSub !== "pacientes") {
     const al = S.idSub === "alunos";
     const q = norm(S.memBusca);
@@ -918,7 +991,7 @@ async function baixarCSV(id){
   const csv = "﻿" + [t.cols.map(c => q(c.t)).join(";"), ...t.linhas.map(l => t.cols.map((c,i) => q(c.fmt ? c.fmt(l[i]) : l[i])).join(";"))].join("\r\n");
   const nome = `cora-${norm(t.titulo).replace(/[^a-z0-9]+/g,"-")}-${periodo().ini}.csv`;
   if (S.dl) { try { await S.dl.save({filename:nome, data:csv}); } catch (e) { if (e?.code !== "declined") toast("Não foi possível baixar o arquivo aqui."); } return; }
-  if (S.mode === "local") { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv"})); a.download = nome; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); return; }
+  if (S.mode === "local" || S.mode === "supa") { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv"})); a.download = nome; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); return; }
   toast("O download de arquivos não está disponível nesta visualização.");
 }
 function vMetricas(){
@@ -1035,6 +1108,17 @@ const resultados = (l, sel) => l.length ? l.map(p => { const aberto = S.atend.so
 async function entrar(rawMat, senha){
   const mat = matKey(rawMat);
   if (!mat || !senha) return "Digite a matrícula e a senha.";
+  if (S.mode === "supa") {
+    const {data, error} = await sb.auth.signInWithPassword({email:emailDe(mat), password:senha});
+    if (error) return /invalid/i.test(error.message) ? "Matrícula ou senha incorreta." : "Não foi possível entrar: " + error.message;
+    try { await carregarTudo(); } catch { await sb.auth.signOut(); return "Não foi possível carregar os dados. Tente de novo."; }
+    const m = S.membros.find(x => x.userId === data.user.id);
+    const erro = !m ? "Seu acesso não está ligado a um cadastro ativo. Procure o administrador." : m.ativo === false ? "Este cadastro está inativo. Procure o administrador." : vencido(m) ? `Este código temporário venceu em ${kShort(m.validade)}. Procure o administrador.` : "";
+    if (erro) { await sb.auth.signOut(); S.membros = []; S.pacientes = []; S.atend = []; return erro; }
+    S.meMat = m.matricula; S.forcarTroca = !!m.trocarSenha; ultimoUso = Date.now(); gravarSessao(); render();
+    if (!S.forcarTroca) toast(`Olá, ${m.nome.split(" ")[0]}!`);
+    return null;
+  }
   const m = membro(mat), rec = S.senhas[mat];
   const ok = m && rec && await confere(senha, rec);
   if (!ok) return "Matrícula ou senha incorreta.";
@@ -1061,7 +1145,7 @@ function dlgTrocarSenha(){
     ${F("ts-1","Nova senha",`<input type="password" id="ts-1" autocomplete="new-password">`,"", "Pelo menos 8 caracteres, com letras e números.")}
     ${F("ts-2","Repita a nova senha",`<input type="password" id="ts-2" autocomplete="new-password">`)}
   `, {ok:"Salvar nova senha", onOk: async () => {
-    if (!err("ts-0", await confere(v("ts-0"), S.senhas[S.meMat]) ? "" : "Senha atual incorreta.")) return false;
+    if (!err("ts-0", await senhaAtualOk(v("ts-0")) ? "" : "Senha atual incorreta.")) return false;
     if (!err("ts-1", senhaFraca(form.querySelector("#ts-1").value))) return false;
     if (!err("ts-2", form.querySelector("#ts-1").value !== form.querySelector("#ts-2").value ? "As senhas não são iguais." : "")) return false;
     return save(() => gravarSenha(S.meMat, form.querySelector("#ts-1").value, false), "Senha alterada");
@@ -1094,6 +1178,12 @@ function dlgTemp(){
   }});
 }
 async function converter(m, nova){
+  if (S.mode === "supa") {
+    const r = await sb.rpc("converter_matricula", {de:m.matricula, para:nova}); if (r.error) throw r.error;
+    await funcaoAdmin({acao:"atualizar_login", matricula:nova});
+    if (S.meMat === m.matricula) { S.meMat = nova; gravarSessao(); }
+    await carregarTudo(); render(); return;
+  }
   const d = {...strip(m), matricula:nova, temporario:false, validade:"", convertidoDe:m.matricula};
   await B.set("membros", nova, d);
   const troca = (x) => x === m.matricula ? nova : x;
@@ -1119,11 +1209,11 @@ function dlgMembro(m, grupo){
     ${m.temporario ? F("m-val","Válido até",`<input type="date" id="m-val" value="${esc(m.validade||"")}">`) : ""}
     <div class="f full"><label style="display:flex;gap:8px;align-items:center;font-weight:600;color:var(--fg);font-size:13.5px"><input type="checkbox" id="m-ativo" ${m.ativo===false?"":"checked"}> Cadastro ativo</label></div>
     ${m.temporario ? `<div class="f full box"><label for="m-nova">Converter para matrícula definitiva</label><div class="row" style="flex-wrap:nowrap"><input type="text" id="m-nova" placeholder="Matrícula institucional" autocomplete="off"><button class="btn" type="button" id="m-conv">Converter</button></div><span class="hint">Todo o histórico de atendimentos passa para a nova matrícula.</span><span class="err" id="m-nova-err"></span></div>` : ""}
-    ${edit ? `<div class="f full box"><span class="lb">Senha de acesso</span><span class="hint">${!S.senhas[m.matricula] ? "Esta pessoa ainda não tem senha." : S.senhas[m.matricula].trocar ? "Senha provisória ainda não trocada." : "Senha pessoal definida."} Gere uma senha provisória para o primeiro acesso ou quando a pessoa esquecer a senha.</span><button class="btn sm" type="button" id="m-senha" style="align-self:flex-start">Gerar senha provisória</button></div>` : `<p class="f full hint" style="margin:0">Ao salvar, o CORA gera uma senha provisória para o primeiro acesso.</p>`}
+    ${edit ? `<div class="f full box"><span class="lb">Senha de acesso</span><span class="hint">${({sem:"Esta pessoa ainda não tem senha.", prov:"Senha provisória ainda não trocada.", def:"Senha pessoal definida."})[estadoSenha(m)]} Gere uma senha provisória para o primeiro acesso ou quando a pessoa esquecer a senha.</span><button class="btn sm" type="button" id="m-senha" style="align-self:flex-start">Gerar senha provisória</button></div>` : `<p class="f full hint" style="margin:0">Ao salvar, o CORA gera uma senha provisória para o primeiro acesso.</p>`}
   `, {del:edit, onDel: async () => {
       if (S.atend.some(a=>equipe(a).includes(m.matricula)||a.professorMatricula===m.matricula)) { toast("Há atendimentos ligados a esta matrícula. Marque o cadastro como inativo em vez de excluir."); return false; }
       if (m.matricula === S.meMat) { toast("Você não pode excluir o próprio cadastro."); return false; }
-      return save(async()=>{ if (S.senhas[m.matricula]) await B.del("senhas", m.matricula); await B.del("membros", m.matricula); }, "Cadastro excluído"); },
+      return save(async()=>{ if (S.mode === "supa") { if (m.userId) await funcaoAdmin({acao:"excluir_acesso", matricula:m.matricula}); } else if (S.senhas[m.matricula]) await B.del("senhas", m.matricula); await B.del("membros", m.matricula); }, "Cadastro excluído"); },
     onOk: async () => {
       const mat = matKey(v("m-mat")), nome = v("m-nome").replace(/\s+/g," ");
       let ok = err("m-mat", !mat ? "Informe a matrícula." : (!edit && membro(mat)) ? `Esta matrícula já pertence a ${membro(mat).nome}.` : "");
@@ -1413,6 +1503,24 @@ render();
 setInterval(tick, 20000);
 
 (async function boot(){
+  if (sb) {
+    B = supa(); S.senhasOk = true; S.canAdmin = true; S.canWrite = true; S.isOwner = false;
+    sb.from("config").select("valor").eq("chave","instituicao").maybeSingle().then(({data}) => { if (data?.valor?.nome) { S.inst = data.valor.nome; render(); } });
+    try {
+      const {data:{session}} = await sb.auth.getSession();
+      if (session) {
+        const ultimo = +(localStorage.getItem("cora-ultimo") || 0);
+        if (Date.now() - ultimo > INATIVO_MIN*60000) await sb.auth.signOut();
+        else {
+          await carregarTudo();
+          const m = S.membros.find(x => x.userId === session.user.id);
+          if (m && m.ativo !== false && !vencido(m)) { S.meMat = m.matricula; S.forcarTroca = !!m.trocarSenha; ultimoUso = Date.now(); gravarSessao(); }
+          else await sb.auth.signOut();
+        }
+      }
+    } catch { toast("Não foi possível conectar ao servidor. Verifique a internet."); }
+    S.mode = "supa"; assinarTempoReal(); render(); return;
+  }
   const use = window.claude?.use;
   const db = use ? await use("db").catch(()=>null) : null;
   const ses = lerSessao();
