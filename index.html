@@ -346,6 +346,7 @@ dialog::backdrop{background:rgba(16,24,40,.5)}
 .kpi .dl.bom{color:var(--s-alta)} .kpi .dl.ruim{color:var(--bad)} .kpi .dl.neutro{color:var(--muted);font-weight:500}
 .dash{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:stretch}
 .dash .span-2{grid-column:span 2}
+.dash .span-3{grid-column:1/-1}
 .dash2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
 .panel-h .hint{color:var(--muted);font-size:12.5px}
 .chart .line{fill:none;stroke:var(--bar);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
@@ -440,9 +441,9 @@ const ETAPAS = {
   provisoria:   {nome:"Liberação provisória", curto:"Retorna"},
   alta:         {nome:"Alta (liberação final)", curto:"Alta"},
 };
-const FUNCOES = {admin:"Administrador(a)", professor:"Professor(a)", rt:"Responsável técnico", recepcao:"Recepção", aluno:"Aluno(a)", outro:"Outro colaborador"};
+const FUNCOES = {admin:"Administrador(a)", rt:"Responsável técnico", professor:"Professor(a)", recepcao:"Recepção", aluno:"Aluno(a)"};
 // Administrador, professor e responsável técnico têm acesso a tudo.
-const ADMINS = ["admin","professor","rt"];
+const ADMINS = ["admin"];
 const PROCS_PADRAO = ["Anamnese e exame clínico","Radiografia","Profilaxia","Raspagem e alisamento radicular","Aplicação tópica de flúor","Selante","Restauração em resina composta","Restauração em ionômero de vidro","Tratamento endodôntico","Exodontia","Cirurgia periodontal","Prótese (moldagem / ajuste)","Urgência odontológica","Orientação de higiene oral"];
 
 /* ===== estado ===== */
@@ -499,14 +500,26 @@ function deDb(tab, row){
   if (tab === "membros") r.id = row.matricula;
   return r;
 }
+async function tudo(q){
+  let todos = [], de = 0;
+  for (;;) { const {data, error} = await q().range(de, de + 999); if (error) throw error; todos = todos.concat(data); if (data.length < 1000) break; de += 1000; }
+  return todos;
+}
 async function carregar(t){
   if (!sb) return;
-  let todos = [], de = 0;
-  for (;;) { const {data, error} = await sb.from(t).select("*").range(de, de + 999); if (error) throw error; todos = todos.concat(data); if (data.length < 1000) break; de += 1000; }
+  if (t === "atendimentos" && !isEquipe()) {
+    // Recepção e aluno: quadro sem conteúdo clínico; o aluno soma os atendimentos da própria equipe
+    const mapa = new Map((await tudo(() => sb.rpc("quadro"))).map(r => [r.id, deDb(t, {...r, procedimentos:[], descricao:"", dentes:"", professor_matricula:""})]));
+    if (papel() === "aluno") (await tudo(() => sb.from(t).select("*"))).forEach(r => mapa.set(r.id, deDb(t, r)));
+    S.atend = [...mapa.values()]; return;
+  }
+  const todos = await tudo(() => sb.from(t).select("*"));
   if (t === "config") { for (const r of todos) { if (r.chave === "semestres") S.semestres = r.valor?.lista || null; else if (r.chave === "procedimentos") S.procs = r.valor?.lista || null; else if (r.chave === "instituicao") S.inst = r.valor?.nome || ""; } return; }
   S[t === "atendimentos" ? "atend" : t] = todos.map(r => deDb(t, r));
 }
 const carregarTudo = () => Promise.all(["membros","pacientes","atendimentos","config"].map(carregar));
+const carregarResto = () => Promise.all(["pacientes","atendimentos","config"].map(carregar));
+setInterval(() => { if (S.mode === "supa" && S.meMat && !isEquipe() && document.visibilityState === "visible") carregar("atendimentos").then(render).catch(()=>{}); }, 20000);
 const tempos = {};
 function assinarTempoReal(){
   const ch = sb.channel("cora-dados");
@@ -554,14 +567,23 @@ const paciente = (id) => S.pacientes.find(p => p.id === id);
 const me = () => membro(S.meMat);
 const papel = () => me()?.tipo || null;
 const vencido = (m) => m?.temporario && m.validade && m.validade < keyBR();
-const isAdmin = () => !!me() && !S.forcarTroca && S.canAdmin && ADMINS.includes(papel());
+const papelOk = (...ps) => !!me() && !S.forcarTroca && S.canAdmin && ps.includes(papel());
+// Administrador: contas, cadastros da equipe e configurações
+const isAdmin = () => papelOk("admin");
+// Administrador e responsável técnico: controle clínico total (desfazer, excluir, chegada)
+const isClin = () => papelOk("admin", "rt");
+const isProf = () => papelOk("professor");
+// Quem vê conteúdo clínico, progresso e métricas
+const isEquipe = () => papelOk("admin", "rt", "professor");
+const isRecepcao = () => papelOk("recepcao");
 // Recepção: cadastro de pacientes e check-in de chegada (o administrador também pode).
-const isRecep = () => isAdmin() || (!!me() && S.canAdmin && papel() === "recepcao");
+// Cadastro de pacientes e chegada na recepção
+const isRecep = () => papelOk("admin", "rt", "recepcao");
 const isAluno = () => S.canWrite && papel() === "aluno" && !vencido(me());
-const podeEtapas = () => isAdmin() || isAluno();
+const podeEtapas = () => isEquipe() || isAluno();
 const equipe = (a) => [a.alunoMatricula, a.auxiliarMatricula, a.circulanteMatricula].filter(Boolean);
 const meu = (a) => !!S.meMat && equipe(a).includes(S.meMat);
-const podeAgir = (a) => isAdmin() || (isAluno() && (a.etapa === "recepcao" || meu(a)));
+const podeAgir = (a) => isEquipe() || (isAluno() && (a.etapa === "recepcao" || meu(a)));
 const ts = (a, e) => (a.eventos||[]).find(x => x.etapa === e)?.ts || null;
 const fechado = (a) => a.etapa === "provisoria" || a.etapa === "alta";
 const ordemEtapa = ["recepcao","clinica","procedimento","provisoria","alta"];
@@ -636,7 +658,7 @@ const ICON = {
   met:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
 };
 const liberado = () => !!me() && !S.forcarTroca;
-const NOMES = {checkin:"Check-in", identificacao:"Identificação", progresso:"Progresso", metricas:"Métricas", producao:"Minha produção"};
+const NOMES = {checkin:"Check-in", identificacao:"Identificação", progresso:"Progresso", metricas:"Métricas", producao:"Minha produção", painel:"Painel da recepção"};
 const ICON_CFG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>';
 const ICON_CAL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
 const RING = (mid = "#ffffff", fim = "#f2707b") => `<svg viewBox="0 0 100 100" aria-hidden="true"><g transform="rotate(-86 50 50)" fill="none" stroke-width="14" stroke-linecap="round">${[["#f4b400",0],[mid,-47.75],[mid,-95.5],[mid,-143.26],[fim,-191]].map(([c,o])=>`<circle cx="50" cy="50" r="38" style="stroke:${c}" stroke-dasharray="33 205.76" stroke-dashoffset="${o}"></circle>`).join("")}</g></svg>`;
@@ -646,8 +668,8 @@ function renderTabs(){
   let tabs = [];
   if (liberado()) {
     tabs.push(["checkin","Check-in",ICON.checkin]);
-    if (isAdmin()) tabs.push(["identificacao","Identificação",ICON.ident],["progresso","Progresso",ICON.prog],["metricas","Métricas",ICON.met]);
-    else if (isRecep()) tabs.push(["identificacao","Pacientes",ICON.ident]);
+    if (isEquipe()) tabs.push(["identificacao","Identificação",ICON.ident],["progresso","Progresso",ICON.prog],["metricas","Métricas",ICON.met]);
+    else if (isRecepcao()) tabs.push(["identificacao","Pacientes",ICON.ident],["painel","Painel da recepção",ICON.met]);
     else if (papel() === "aluno") tabs.push(["producao","Minha produção",ICON.prog]);
   }
   if (!tabs.some(t => t[0] === S.view)) S.view = "checkin";
@@ -655,11 +677,11 @@ function renderTabs(){
   const item = ([k,n,i]) => `<button class="nav-i" type="button" data-tab="${k}" aria-current="${S.view===k?"page":"false"}">${i}<span>${n}</span>${k==="checkin" && aguard ? `<span class="badge" title="${aguard} aguardando na recepção">${aguard}</span>` : ""}</button>`;
   const secao = (lbl, ks) => { const l = tabs.filter(t => ks.includes(t[0])); return l.length ? `<div class="nav-lbl">${lbl}</div>` + l.map(item).join("") : ""; };
   if (!$("#wm").innerHTML) $("#wm").innerHTML = WORDMARK();
-  $("#busca-wrap").hidden = !isRecep();
-  $("#tabs").innerHTML = secao("Atendimento", ["checkin","producao"]) + secao("Gestão", ["identificacao","progresso","metricas"])
-    + (isAdmin() ? `<div class="nav-lbl">Configurações</div><button class="nav-i" type="button" data-act="config">${ICON_CFG}<span>Procedimentos</span></button><button class="nav-i" type="button" data-act="semestres">${ICON_CAL}<span>Semestres letivos</span></button>` : "");
+  $("#busca-wrap").hidden = !(isRecep() || isProf());
+  $("#tabs").innerHTML = secao("Atendimento", ["checkin","producao"]) + secao(isRecepcao() ? "Recepção" : "Gestão", ["identificacao","painel","progresso","metricas"])
+    + (isClin() ? `<div class="nav-lbl">Configurações</div><button class="nav-i" type="button" data-act="config">${ICON_CFG}<span>Procedimentos</span></button>${isAdmin() ? `<button class="nav-i" type="button" data-act="semestres">${ICON_CAL}<span>Semestres letivos</span></button>` : ""}` : "");
   $("#bnav").innerHTML = tabs.length > 1 ? tabs.map(item).join("") : "";
-  $("#crumb").innerHTML = liberado() ? `<span>CORA</span><span class="sep">/</span><b>${S.view === "identificacao" && !isAdmin() ? "Pacientes" : NOMES[S.view]}</b>` : "";
+  $("#crumb").innerHTML = liberado() ? `<span>CORA</span><span class="sep">/</span><b>${S.view === "identificacao" && !isEquipe() ? "Pacientes" : NOMES[S.view]}</b>` : "";
 }
 function renderInst(){
   const el = $("#inst"); if (!el) return;
@@ -733,7 +755,7 @@ function render(){
   if (m && (ADMINS.includes(m.tipo) || m.tipo === "recepcao") && !S.canAdmin && S.mode === "db") pre += `<div class="banner warn">Sua função pede acesso de Editor a este app, que sua conta do claude.ai ainda não tem. Peça ao responsável para compartilhar com você como Editor.</div>`;
   if (vencido(m)) pre += `<div class="banner warn">Seu código temporário venceu em ${esc(kShort(m.validade))}. Procure o administrador para renovar ou cadastrar sua matrícula definitiva.</div>`;
   if (!S.canWrite) pre += `<div class="banner">Você tem acesso somente de leitura.</div>`;
-  const fn = {checkin:vCheckin, identificacao:vIdent, progresso:vProgresso, metricas:vMetricas, producao:() => vProducao(true)}[S.view];
+  const fn = {checkin:vCheckin, identificacao:vIdent, progresso:vProgresso, metricas:vMetricas, producao:() => vProducao(true), painel:vPainelRecep}[S.view];
   view.innerHTML = pre + fn();
   restore(aid, sel); tick();
 }
@@ -749,7 +771,7 @@ function cardAt(a){
   else if (a.etapa === "clinica") acts = `<button class="btn sm go-pro" type="button" data-step="procedimento" data-id="${a.id}">Finalizar procedimento</button>`;
   else if (a.etapa === "procedimento") acts = `<button class="btn sm go-prov" type="button" data-step="provisoria" data-id="${a.id}">Liberação provisória</button><button class="btn sm go-alta" type="button" data-step="alta" data-id="${a.id}">Alta</button>`;
   else extra = `<span class="pill e-${a.etapa}">${a.etapa==="alta"?"Alta":"Retorna"+(a.retornoPrevisto?" "+esc(kShort(a.retornoPrevisto).slice(0,5)):"")}</span>`;
-  const verOk = isAdmin() || (isAluno() && meu(a));
+  const verOk = isEquipe() || (isAluno() && meu(a));
   const nTrilha = {recepcao:1, clinica:2, procedimento:3, provisoria:4, alta:4}[a.etapa] || 1;
   return `<div class="card${isAluno() && meu(a) ? " mine" : ""}">
     <div class="track${a.etapa === "alta" ? " fim" : ""}" aria-hidden="true">${[0,1,2,3].map(i => `<i class="${i < nTrilha ? "on" : ""}"></i>`).join("")}</div>
@@ -791,9 +813,9 @@ function vCheckin(){
 /* ----- aba Identificação ----- */
 function vIdent(){
   const nAl = S.membros.filter(m=>m.tipo==="aluno").length, nCo = S.membros.length - nAl;
-  if (!isAdmin()) S.idSub = "pacientes";
+  if (!isEquipe()) S.idSub = "pacientes";
   if (!["alunos","colaboradores","pacientes"].includes(S.idSub)) S.idSub = "alunos";
-  const sub = !isAdmin() ? "" : `<div class="seg" role="group">
+  const sub = !isEquipe() ? "" : `<div class="seg" role="group">
     <button type="button" data-idsub="alunos" aria-pressed="${S.idSub==="alunos"}">Alunos (${nAl})</button>
     <button type="button" data-idsub="colaboradores" aria-pressed="${S.idSub==="colaboradores"}">Colaboradores (${nCo})</button>
     <button type="button" data-idsub="pacientes" aria-pressed="${S.idSub==="pacientes"}">Pacientes (${S.pacientes.length})</button></div>`;
@@ -807,14 +829,14 @@ function vIdent(){
     const filtros = al ? `<option value="">Todos os alunos</option><option value="def" ${S.memFiltro==="def"?"selected":""}>Com matrícula</option><option value="temp" ${S.memFiltro==="temp"?"selected":""}>Com código temporário</option>`
       : `<option value="">Todas as funções</option>${Object.entries(FUNCOES).filter(([k])=>k!=="aluno").map(([k,n])=>`<option value="${k}" ${S.memFiltro===k?"selected":""}>${n}</option>`).join("")}`;
     return `<div class="head"><div><h1>Identificação</h1><p>${al ? "Alunos cadastrados por matrícula institucional e nome completo. Quem ainda não tem matrícula recebe um código temporário." : "Administradores, professores, responsável técnico, recepção e demais colaboradores. Administrador, professor e responsável técnico têm acesso a tudo; a recepção cuida dos pacientes e do check-in."}</p></div>
-      ${S.canWrite ? (al ? `<div class="row"><button class="btn" type="button" data-act="novo-temp">Gerar código temporário</button><button class="btn primary" type="button" data-act="novo-aluno">+ Cadastrar aluno</button></div>` : `<button class="btn primary" type="button" data-act="novo-colab">+ Cadastrar colaborador</button>`) : ""}</div>
+      ${S.canWrite && isAdmin() ? (al ? `<div class="row"><button class="btn" type="button" data-act="novo-temp">Gerar código temporário</button><button class="btn primary" type="button" data-act="novo-aluno">+ Cadastrar aluno</button></div>` : `<button class="btn primary" type="button" data-act="novo-colab">+ Cadastrar colaborador</button>`) : ""}</div>
     ${sub}
     <section class="panel"><div class="panel-h" style="gap:10px">
       <div class="row" style="flex:1;min-width:0"><input type="search" id="mem-busca" placeholder="Buscar por nome, matrícula${al?" ou código":""}" value="${esc(S.memBusca)}" style="max-width:340px" aria-label="Buscar">
       <select id="mem-filtro" style="width:auto" aria-label="Filtrar">${filtros}</select></div></div>
-      <div class="tbl-wrap"><table><thead><tr><th>${al?"Matrícula / código":"Matrícula"}</th><th>Nome completo</th>${al?"":"<th>Função</th>"}<th>${al?"Período / turma":"Setor"}</th><th>Situação</th><th>Senha</th></tr></thead><tbody>
-      ${lista.length ? lista.map(m=>`<tr class="click" data-edit-m="${esc(m.matricula)}"><td class="mono">${esc(m.matricula)}</td><td><b>${esc(m.nome)}</b></td>${al?"":`<td>${esc(FUNCOES[m.tipo]||m.tipo)}${ADMINS.includes(m.tipo)?' <span class="pill" style="background:var(--accent-soft);color:var(--accent)">admin</span>':""}</td>`}<td>${esc(m.periodo||"—")}</td><td>${m.ativo===false?'<span class="pill e-provisoria">Inativo</span>': vencido(m)?'<span class="pill e-provisoria">Código vencido</span>' : m.temporario?`<span class="pill e-recepcao">Temporário até ${esc(kShort(m.validade).slice(0,5))}</span>`:'<span class="pill e-alta">Ativo</span>'}</td><td>${senhaTag(m)}</td></tr>`).join("")
-        : `<tr><td colspan="${al?5:6}"><div class="empty">${S.membros.some(m => al ? m.tipo==="aluno" : m.tipo!=="aluno") ? "Ninguém encontrado com esse filtro." : al ? "Nenhum aluno cadastrado ainda." : "Nenhum colaborador cadastrado ainda."}</div></td></tr>`}
+      <div class="tbl-wrap"><table><thead><tr><th>${al?"Matrícula / código":"Matrícula"}</th><th>Nome completo</th>${al?"":"<th>Função</th>"}<th>${al?"Período / turma":"Setor"}</th><th>Situação</th>${isAdmin() ? "<th>Senha</th>" : ""}</tr></thead><tbody>
+      ${lista.length ? lista.map(m=>`<tr ${isAdmin() ? `class="click" data-edit-m="${esc(m.matricula)}"` : ""}><td class="mono">${esc(m.matricula)}</td><td><b>${esc(m.nome)}</b></td>${al?"":`<td>${esc(FUNCOES[m.tipo]||m.tipo)}${ADMINS.includes(m.tipo)?' <span class="pill" style="background:var(--accent-soft);color:var(--accent)">admin</span>':""}</td>`}<td>${esc(m.periodo||"—")}</td><td>${m.ativo===false?'<span class="pill e-provisoria">Inativo</span>': vencido(m)?'<span class="pill e-provisoria">Código vencido</span>' : m.temporario?`<span class="pill e-recepcao">Temporário até ${esc(kShort(m.validade).slice(0,5))}</span>`:'<span class="pill e-alta">Ativo</span>'}</td>${isAdmin() ? `<td>${senhaTag(m)}</td>` : ""}</tr>`).join("")
+        : `<tr><td colspan="${(al?4:5) + (isAdmin()?1:0)}"><div class="empty">${S.membros.some(m => al ? m.tipo==="aluno" : m.tipo!=="aluno") ? "Ninguém encontrado com esse filtro." : al ? "Nenhum aluno cadastrado ainda." : "Nenhum colaborador cadastrado ainda."}</div></td></tr>`}
       </tbody></table></div></section>`;
   }
   const q = norm(S.pacBusca), qd = digits(S.pacBusca);
@@ -822,7 +844,7 @@ function vIdent(){
   return `<div class="head"><div><h1>Identificação</h1><p>Cadastro de pacientes, feito pela recepção. O aluno é definido a cada atendimento, na entrada da clínica.</p></div>
     ${isRecep() && S.canWrite ? `<button class="btn primary" type="button" data-act="novo-pac">+ Cadastrar paciente</button>` : ""}</div>
   ${sub}
-  ${!isRecep() ? `<div class="banner">Somente a recepção cadastra e altera dados de pacientes.</div>` : ""}
+  ${!isRecep() ? `<div class="banner">Somente recepção, responsável técnico e administrador cadastram e alteram dados de pacientes.</div>` : ""}
   <section class="panel"><div class="panel-h"><input type="search" id="pac-busca" placeholder="Buscar por nome, prontuário, CPF ou telefone" value="${esc(S.pacBusca)}" style="max-width:380px" aria-label="Buscar paciente"></div>
     <div class="tbl-wrap"><table><thead><tr><th>Pront.</th><th>Paciente</th><th>Idade</th><th>CPF</th><th>Telefone</th><th>Último atendimento</th><th>Situação</th></tr></thead><tbody>
     ${lista.length ? lista.map(p=>{ const st = statusPac(p); return `<tr class="click" data-edit-p="${p.id}"><td class="mono">${esc(p.prontuario||"—")}</td><td><b>${esc(p.nome)}</b>${p.alergias?` <span class="pill" style="background:var(--bad-soft);color:var(--bad)">alerta</span>`:""}</td><td>${idade(p.nascimento) ?? "—"}</td><td class="mono">${esc(p.cpf||"—")}</td><td class="mono">${esc(p.telefone||"—")}</td><td>${st.ult ? esc(kShort(st.ult.dataBR))+`<div style="color:var(--muted);font-size:12.5px">${esc(alunosTxt(st.ult))}</div>` : "—"}</td><td><span class="pill ${st.k==="novo"?"":"e-"+st.k}">${esc(st.t)}</span></td></tr>`; }).join("")
@@ -837,7 +859,7 @@ function visitaHTML(a, opts = {}){
   const clin = ts(a,"procedimento") && ts(a,"clinica") ? mins(ts(a,"clinica"), ts(a,"procedimento")) : null;
   const titulo = opts.comPaciente ? `${esc(paciente(a.pacienteId)?.nome||"—")} · ${esc(kDate(a.dataBR,{day:"2-digit",month:"2-digit",year:"numeric"}))}` : esc(kDate(a.dataBR,{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"}));
   return `<article class="visit"><div class="visit-h"><div><b>${titulo}</b> <span style="color:var(--muted);font-size:12.5px">· Operador: ${esc(a.alunoMatricula?nomeM(a.alunoMatricula):"a definir")}${a.auxiliarMatricula?" · Auxiliar: "+esc(nomeM(a.auxiliarMatricula)):""}${a.circulanteMatricula?" · Circulante: "+esc(nomeM(a.circulanteMatricula)):""}${a.alunoMatricula?" ("+tamEquipe(a)+")":""}${a.professorMatricula?" · Supervisão: "+esc(nomeM(a.professorMatricula)):""}</span></div>
-    <div class="row"><span class="pill e-${a.etapa}">${esc(ETAPAS[a.etapa].nome)}</span>${opts.botao!==false && isAdmin()?`<button class="btn sm" type="button" data-ver="${a.id}">Detalhes</button>`:""}</div></div>
+    <div class="row"><span class="pill e-${a.etapa}">${esc(ETAPAS[a.etapa].nome)}</span>${opts.botao!==false && isEquipe()?`<button class="btn sm" type="button" data-ver="${a.id}">Detalhes</button>`:""}</div></div>
     <div class="visit-b">
       <ol class="tl">${ev.map(e=>`<li class="c-${e.etapa}"><div><b>${esc(ETAPAS[e.etapa]?.nome||e.etapa)}</b> · <span class="t">${esc(dataHoraBR(e.ts))}</span></div><div class="n">por ${esc(nomeM(e.por))}${e.nota?" — "+esc(e.nota):""}</div></li>`).join("")}</ol>
       <div class="row" style="font-size:13px;color:var(--muted)"><span>Espera: <b style="color:var(--fg)">${durTxt(espera)}</b></span><span>Tempo em clínica: <b style="color:var(--fg)">${durTxt(clin)}</b></span>${a.retornoPrevisto?`<span>Retorno previsto: <b style="color:var(--fg)">${esc(kShort(a.retornoPrevisto))}</b></span>`:""}</div>
@@ -985,8 +1007,8 @@ function colChart(bins, unidade = "check-in(s)", W = 640){
   });
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Gráfico de colunas">${g}</svg>`;
 }
-function lineChart(pts){
-  const W = 640, H = 230, pl = 44, pr = 12, pt = 14, pb = 28;
+function lineChart(pts, W = 640){
+  const H = 230, pl = 44, pr = 12, pt = 14, pb = 28;
   const vals = pts.filter(p => p.v != null).map(p => p.v);
   if (!vals.length) return `<div class="empty">Sem tempos registrados neste período.</div>`;
   const {step, top} = escala(Math.max(10, ...vals));
@@ -1101,6 +1123,37 @@ function vMetricas(){
   </div>`;
 }
 
+function vPainelRecep(){
+  const hoje = keyBR(), ini7 = kAdd(hoje, -6), ini30 = kAdd(hoje, -29);
+  const de = (i, f) => S.atend.filter(a => a.dataBR >= i && a.dataBR <= f);
+  const esperaDe = (l) => media(l.filter(a => ts(a,"clinica")).map(a => mins(ts(a,"recepcao"), ts(a,"clinica"))));
+  const lh = de(hoje, hoje), l7 = de(ini7, hoje), l30 = de(ini30, hoje);
+  const aguard = S.atend.filter(a => a.etapa === "recepcao").length;
+  const bins = [], linha = [];
+  for (let k = ini30; k <= hoje; k = kAdd(k, 1)) { const l = S.atend.filter(a => a.dataBR === k); const lb = String(+k.slice(8)), tp = kDate(k, {weekday:"short", day:"2-digit", month:"2-digit"}); bins.push({l:lb, tip:tp, v:l.length}); linha.push({l:lb, tip:tp, v:esperaDe(l)}); }
+  const porHora = []; for (let h = 7; h <= 21; h++) porHora.push({l:h+"h", tip:`Chegadas entre ${h}h e ${h+1}h (30 dias)`, v:l30.filter(a => +fHoraNum.format(new Date(ts(a,"recepcao"))) === h).length});
+  const fim7 = kAdd(hoje, 7);
+  const retornos = S.atend.filter(a => a.etapa === "provisoria" && a.retornoPrevisto && a.retornoPrevisto >= hoje && a.retornoPrevisto <= fim7)
+    .filter(a => !S.atend.some(b => b.pacienteId === a.pacienteId && b.dataBR > a.dataBR))
+    .sort((a, b) => a.retornoPrevisto.localeCompare(b.retornoPrevisto));
+  return `<div class="head"><div><h1>Painel da recepção</h1><p>Chegadas, tempo de espera e retornos previstos. Sem informações clínicas.</p></div></div>
+  <div class="kpis">
+    <div class="kpi hl"><span>Check-ins hoje</span><b>${lh.length}</b><small>${aguard} aguardando agora</small></div>
+    <div class="kpi"><span>Espera média hoje</span><b>${durTxt(esperaDe(lh))}</b><small>recepção → clínica</small></div>
+    <div class="kpi"><span>Espera média (7 dias)</span><b>${durTxt(esperaDe(l7))}</b><small>${l7.length} check-ins</small></div>
+    <div class="kpi"><span>Check-ins (30 dias)</span><b>${l30.length}</b><small>${new Set(l30.map(a => a.pacienteId)).size} pacientes</small></div>
+    <div class="kpi"><span>Retornos previstos</span><b>${retornos.length}</b><small>próximos 7 dias</small></div>
+    <div class="kpi"><span>Em atendimento</span><b>${S.atend.filter(a => a.etapa === "clinica" || a.etapa === "procedimento").length}</b><small>neste momento</small></div>
+  </div>
+  <div class="dash">
+    <section class="panel span-2"><div class="panel-h"><h2>Check-ins por dia</h2><span class="hint">últimos 30 dias</span></div><div class="panel-b chart">${l30.length ? colChart(bins) : `<div class="empty">Sem check-ins nos últimos 30 dias.</div>`}</div></section>
+    <section class="panel"><div class="panel-h"><h2>Chegadas por horário</h2></div><div class="panel-b chart">${l30.length ? colChart(porHora, "chegada(s)", 340) : `<div class="empty">Sem chegadas.</div>`}</div></section>
+    <section class="panel span-3"><div class="panel-h"><h2>Tempo médio de espera por dia</h2><span class="hint">recepção → entrada na clínica, últimos 30 dias</span></div><div class="panel-b chart">${lineChart(linha, 1180)}</div></section>
+  </div>
+  ${tabelaHTML("retornos", "Retornos previstos nos próximos 7 dias", [{t:"Paciente"},{t:"Data prevista"},{t:"Prontuário", mono:true},{t:"Telefone", mono:true},{t:"Aluno(a)"}],
+    retornos.map(a => { const p = paciente(a.pacienteId); return [p?.nome || "—", kShort(a.retornoPrevisto), p?.prontuario || "—", p?.telefone || "—", alunosTxt(a)]; }))}`;
+}
+
 /* ===== diálogos ===== */
 const dlg = $("#dlg"), form = $("#dlg-form");
 let onOk = null, onDel = null;
@@ -1148,11 +1201,13 @@ async function entrar(rawMat, senha){
   if (S.mode === "supa") {
     const {data, error} = await sb.auth.signInWithPassword({email:emailDe(mat), password:senha});
     if (error) return /invalid/i.test(error.message) ? "Matrícula ou senha incorreta." : "Não foi possível entrar: " + error.message;
-    try { await carregarTudo(); } catch { await sb.auth.signOut(); return "Não foi possível carregar os dados. Tente de novo."; }
+    try { await carregar("membros"); } catch { await sb.auth.signOut(); return "Não foi possível carregar os dados. Tente de novo."; }
     const m = S.membros.find(x => x.userId === data.user.id);
     const erro = !m ? "Seu acesso não está ligado a um cadastro ativo. Procure o administrador." : m.ativo === false ? "Este cadastro está inativo. Procure o administrador." : vencido(m) ? `Este código temporário venceu em ${kShort(m.validade)}. Procure o administrador.` : "";
     if (erro) { await sb.auth.signOut(); S.membros = []; S.pacientes = []; S.atend = []; return erro; }
-    S.meMat = m.matricula; S.forcarTroca = !!m.trocarSenha; ultimoUso = Date.now(); gravarSessao(); render();
+    S.meMat = m.matricula; S.forcarTroca = !!m.trocarSenha; ultimoUso = Date.now(); gravarSessao();
+    try { await carregarResto(); } catch {}
+    render();
     if (!S.forcarTroca) toast(`Olá, ${m.nome.split(" ")[0]}!`);
     return null;
   }
@@ -1338,7 +1393,7 @@ function lerEquipe(){
   const op = v("en-op"), aux = v("en-aux"), circ = v("en-circ");
   const lista = [op, aux, circ].filter(Boolean);
   let ok = err("en-op", !op ? "Escolha o aluno operador." : "");
-  ok = err("en-eq", new Set(lista).size !== lista.length ? "Cada aluno só pode ocupar uma função no atendimento." : (isAluno() && !isAdmin() && !lista.includes(S.meMat)) ? "Você precisa fazer parte da equipe deste atendimento." : "") && ok;
+  ok = err("en-eq", new Set(lista).size !== lista.length ? "Cada aluno só pode ocupar uma função no atendimento." : (isAluno() && !isEquipe() && !lista.includes(S.meMat)) ? "Você precisa fazer parte da equipe deste atendimento." : "") && ok;
   return ok ? {alunoMatricula:op, auxiliarMatricula:aux, circulanteMatricula:circ} : null;
 }
 function dlgEntrada(a){
@@ -1386,11 +1441,11 @@ function dlgLiberar(a, tipo){
   `, {ok: prov ? "Registrar liberação provisória" : "Registrar alta", onOk: async () => avancar(a, tipo, prov ? {retornoPrevisto:v("lb-ret")} : {}, v("lb-nota"))});
 }
 function dlgDetalhe(a){
-  const adm = isAdmin();
-  const podeEditarProc = adm || (isAluno() && meu(a) && a.etapa === "procedimento");
+  const adm = isClin();
+  const podeEditarProc = adm || (isProf() && (a.professorMatricula === S.meMat || !fechado(a))) || (isAluno() && meu(a) && a.etapa === "procedimento");
   open("Detalhes do atendimento", `<div class="f full">${visitaHTML(a, {botao:false})}</div>
     ${S.canWrite && adm && (a.eventos||[]).length > 1 ? `<div class="f full"><button class="btn sm" type="button" data-undo style="align-self:flex-start">Desfazer última etapa (${esc(ETAPAS[a.etapa].nome)})</button><span class="hint">Use para corrigir um clique errado. O registro da etapa é removido.</span></div>` : ""}
-    ${S.canWrite && a.alunoMatricula && (adm || (isAluno() && meu(a) && !fechado(a))) ? `<div class="f full"><button class="btn sm" type="button" data-editeq style="align-self:flex-start">Editar equipe (operador, auxiliar, circulante)</button></div>` : ""}
+    ${S.canWrite && a.alunoMatricula && (adm || ((isProf() || (isAluno() && meu(a))) && !fechado(a))) ? `<div class="f full"><button class="btn sm" type="button" data-editeq style="align-self:flex-start">Editar equipe (operador, auxiliar, circulante)</button></div>` : ""}
     ${S.canWrite && podeEditarProc && a.procedimentos?.length ? `<div class="f full"><button class="btn sm" type="button" data-editproc style="align-self:flex-start">Editar descrição do procedimento</button></div>` : ""}`,
     {ok:false, focus:false, del:S.canWrite && adm, delTxt:"Excluir atendimento", onDel: async () => save(()=>B.del("atendimentos", a.id), "Atendimento excluído")});
   const u = form.querySelector("[data-undo]");
@@ -1459,7 +1514,7 @@ document.addEventListener("click", async (e) => {
     const e2 = senhaFraca(a) || (a !== b ? "As senhas não são iguais." : "");
     if (e2) { el.textContent = e2; return; }
     t.disabled = true;
-    if (await save(() => gravarSenha(S.meMat, a, false))) { S.forcarTroca = false; gravarSessao(); render(); toast("Senha criada. Bem-vindo ao CORA!"); } else t.disabled = false;
+    if (await save(() => gravarSenha(S.meMat, a, false))) { S.forcarTroca = false; gravarSessao(); if (S.mode === "supa") await carregarResto().catch(()=>{}); render(); toast("Senha criada. Bem-vindo ao CORA!"); } else t.disabled = false;
   }
   else if (act === "setup") {
     const mat = matKey($("#cf-mat").value), nome = $("#cf-nome").value.trim().replace(/\s+/g," "), a = $("#cf-1").value, b = $("#cf-2").value, el = $("#gate-err");
@@ -1481,8 +1536,8 @@ document.addEventListener("click", async (e) => {
   else if (act === "novo-aluno") dlgMembro(null, "aluno");
   else if (act === "novo-colab") dlgMembro(null, "colab");
   else if (act === "novo-temp") dlgTemp();
-  else if (act === "semestres") dlgSemestres();
-  else if (act === "config") dlgProcs();
+  else if (act === "semestres") { if (isAdmin()) dlgSemestres(); }
+  else if (act === "config") { if (isClin()) dlgProcs(); }
   else if (act === "inst") dlgInst();
 });
 view.addEventListener("keydown", (e) => {
@@ -1498,7 +1553,7 @@ view.addEventListener("click", (e) => {
   if (d.sort) { S.sortAl = {k:d.sort, dir: S.sortAl.k === d.sort ? -S.sortAl.dir : -1}; render(); return; }
   if (d.step && a) { if (!podeAgir(a)) return toast("Você não tem permissão para esta etapa."); if (d.step==="clinica") dlgEntrada(a); else if (d.step==="procedimento") dlgProcedimento(a); else dlgLiberar(a, d.step); }
   else if (d.ver) { const x = S.atend.find(y=>y.id===d.ver); if (x) dlgDetalhe(x); }
-  else if (d.idsub && isAdmin()) { if (S.idSub !== d.idsub) { S.memFiltro = ""; S.memBusca = ""; } S.idSub = d.idsub; render(); }
+  else if (d.idsub && isEquipe()) { if (S.idSub !== d.idsub) { S.memFiltro = ""; S.memBusca = ""; } S.idSub = d.idsub; render(); }
   else if (d.editM) dlgMembro(membro(d.editM));
   else if (d.editP) dlgPaciente(paciente(d.editP));
   else if (d.prog) { S.progMode = d.prog; render(); }
@@ -1537,7 +1592,7 @@ document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-busca-pac]");
   if (b) {
     const id = b.dataset.buscaPac; $("#busca-global").value = ""; buscaGlobal("");
-    if (isAdmin()) { S.view = "progresso"; S.progMode = "paciente"; S.progSel = id; render(); window.scrollTo(0,0); }
+    if (isEquipe()) { S.view = "progresso"; S.progMode = "paciente"; S.progSel = id; render(); window.scrollTo(0,0); }
     else dlgPaciente(paciente(id));
     return;
   }
@@ -1561,9 +1616,9 @@ setInterval(tick, 20000);
         const ultimo = +(localStorage.getItem("cora-ultimo") || 0);
         if (Date.now() - ultimo > INATIVO_MIN*60000) await sb.auth.signOut();
         else {
-          await carregarTudo();
+          await carregar("membros");
           const m = S.membros.find(x => x.userId === session.user.id);
-          if (m && m.ativo !== false && !vencido(m)) { S.meMat = m.matricula; S.forcarTroca = !!m.trocarSenha; ultimoUso = Date.now(); gravarSessao(); }
+          if (m && m.ativo !== false && !vencido(m)) { S.meMat = m.matricula; S.forcarTroca = !!m.trocarSenha; ultimoUso = Date.now(); gravarSessao(); await carregarResto(); }
           else await sb.auth.signOut();
         }
       }

@@ -55,11 +55,20 @@ Visível só para administradores. Períodos: dia, semana, mês, semestre letivo
 
 ## Perfis de acesso
 
-| Perfil | O que pode fazer |
-|---|---|
-| Administrador, professor, responsável técnico | Acesso a tudo: check-in, cadastros, progresso, métricas e configurações. |
-| Recepção | Cadastro de pacientes e check-in de chegada. |
-| Aluno | Check-in na parte clínica (entrada, procedimento, liberação provisória e alta) e a própria produção. |
+As regras valem no servidor (Supabase), não só nas telas.
+
+| O que | Administrador | Resp. técnico | Professor | Recepção | Aluno |
+|---|---|---|---|---|---|
+| Chegada do paciente (check-in) | ✔ | ✔ | — | ✔ | — |
+| Entrada, procedimento, liberação e alta | ✔ | ✔ | ✔ | — | só na própria equipe |
+| Corrigir/desfazer etapa, excluir atendimento | ✔ | ✔ | corrige o que supervisionou | — | corrige a própria descrição antes da liberação |
+| Cadastro de pacientes | ✔ | ✔ | consulta | ✔ | — |
+| Conteúdo clínico (descrição, procedimentos, histórico) | ✔ | ✔ | ✔ | — | só dos pacientes que atendeu |
+| Cadastro de alunos e colaboradores | ✔ | consulta | consulta | — | — |
+| Senhas e acessos | ✔ | — | — | — | — |
+| Progresso e produção por aluno | ✔ | ✔ | ✔ | — | só a própria |
+| Métricas | ✔ | ✔ | ✔ | Painel da recepção | — |
+| Configurações | ✔ | lista de procedimentos | — | — | — |
 
 ## Métricas
 
