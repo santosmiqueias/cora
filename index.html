@@ -689,6 +689,7 @@ function render(){
   renderTabs(); renderMe(); renderInst();
   let pre = "";
   if (S.mode === "local") pre += `<div class="banner warn">Modo local: os dados ficam apenas neste navegador. Abra pelo claude.ai, conectado, para salvar na nuvem e usar em equipe.</div>`;
+  if (S.mode === "db" || S.mode === "slow") pre += `<div class="banner warn"><span><b>O CORA mudou de endereço.</b> Use <a href="https://santosmiqueias.github.io/cora/" target="_blank" rel="noopener">santosmiqueias.github.io/cora</a>, com banco de dados próprio. Esta versão não recebe mais os registros novos.</span></div>`;
   if (S.mode === "slow") pre += `<div class="banner warn">Os dados ainda não chegaram do servidor. A página atualiza sozinha assim que a conexão responder.</div>`;
   if (!liberado()) { view.innerHTML = pre + vGate(); restore(aid, sel); tick(); return; }
   const m = me();
